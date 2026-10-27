@@ -71,7 +71,16 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My profile** from the user menu (top right; on a phone, the menu button). Until your name and faculty are
+   saved, a notice at the top reminds you to add them.
+2. Fill in **Name** and **Faculty**. Your email and role are shown above the form; you can't change them here.
+3. To add a skill, type it and press Enter or **Add skill**. Remove one with the **×** on its tag.
+4. Write a short **Bio** if you like. The counter under it shows how many of the 500 characters you've used.
+5. Add up to 3 **Links**, each starting with `https://`. Use **Add link** for another row.
+6. Press **Save profile**. You see "Profile saved." The first time you save after creating your account, you're
+   taken to the events list. If something is missing or too long, the message appears under that field.
+7. To see someone else's profile, select their name in a team list or the ranking. Their profile is read-only. On
+   your own, **Edit my profile** brings you back to the form.
 
 ---
 
@@ -85,10 +94,19 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 **Good to know:**
 - Events appear in the list only while their registration is open.
 - You can register for each event once. If registration is closed, you can't register.
+- You need a name and faculty on your profile first. Until then the event page shows "Complete your profile before
+  registering." with a link to your profile.
+- Judges and organizers don't register. Organizers see "Manage event" on the event page instead.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **Events** in the top navigation. Each card shows the event's dates, the maximum team size and the start of
+   its description. Events you're already registered for have a "Registered" badge.
+2. Select an event to open its page. It shows the full description, the status badges and how many people have
+   registered.
+3. Select **Register**. The page now says "You're registered" and offers **Create or join a team**.
+4. Not logged in? Select **Log in to register**; after logging in you come back to the event.
+5. If registration has closed, the button reads "Registration closed" and can't be used.
 
 ### My events
 <!-- owner: Xurliman · card #5 · fill in your PR -->
@@ -98,7 +116,11 @@ once they're published.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My events** in the top navigation. It's also where you land after logging in.
+2. Each event shows its dates and status, your team (or "No team yet") and whether your team has submitted.
+3. Select **Go to my team** or **Create or join a team** to manage your team, or **Open event** for the event page.
+4. Once the organizer publishes results, select **Results published: see the ranking** to jump to the ranking.
+5. Events whose results are still to come are listed first, soonest first.
 
 ### Form a team
 <!-- owner: Xurliman · card #6 · fill in your PR -->
@@ -115,7 +137,18 @@ before your team submits.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Register for the event first, then open it from **My events** and select **Create or join a team**.
+2. **To create a team:** under "Create a team", type a team name (2–40 characters, not already used in this event)
+   and select **Create team**. You're its first member.
+3. **To share it:** your team page shows the 6-character invite code. Select **Copy code** and send it to your
+   teammates, or read it out: it has no 0/O or 1/I, so it's hard to mistype.
+4. **To join a team:** under "Join with a code", enter the code your teammate sent (upper or lower case) and select
+   **Join team**. If it doesn't work, HackHub says why: wrong code, team full, you're already on a team, or the team
+   has already submitted.
+5. Your team page lists every member (select a name to see their profile), shows "{n} of {max}" and whether your team
+   has submitted, with a button to submit or edit your project while submissions are open.
+6. **To leave:** select **Leave team** and confirm. If you're the last member, the team is deleted. After your team
+   submits, the button is disabled.
 
 ### Submit your project
 <!-- owner: Mehroj · card #7 · fill in your PR -->
@@ -131,7 +164,15 @@ are open, and update it until they close.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. On your team page, select **Submit project**. (Until the organizer opens submissions, the page says "Submissions
+   haven't opened yet.")
+2. Fill in the **Project title**, a **Description** (the counter shows how many of the 2000 characters you've used)
+   and the **Repository link**, for example `https://github.com/team/project`.
+3. Press **Submit project**. You're taken back to your team page with "Project submitted."
+4. To change something while submissions are open, any team member opens the same page again: the form is filled
+   in, and **Save changes** updates it ("Submission updated."). The page shows when it was last updated.
+5. Once the organizer closes submissions, the page shows your submission read-only. If your team didn't submit, it
+   says so: that team won't be ranked.
 
 ### See the results
 <!-- owner: Mehroj · card #16 · fill in your PR -->
@@ -144,7 +185,12 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event's page, from **My events** or the link you were given. Before the organizer publishes, there's no
+   ranking on it.
+2. Once results are published, the **Final ranking** section lists each team's rank, name, members and total.
+3. If your team is in the list, its row is labelled **Your team**. When you're signed in, select a member's name to
+   open their profile.
+4. On a phone, each team is shown as a card with its rank and total at the top.
 
 ---
 
@@ -159,10 +205,22 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 - The end date can't be before the start date. An event can start and end on the same day.
 - A new event has registration closed, so participants don't see it until you open registration.
 - Any organizer can manage any event.
+- The maximum team size is a whole number from 1 to 10 (4 by default). When you edit it, you can't set it below the
+  size of the largest team that already exists.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **Events I run**. It lists every event with its dates, its status (registration and submissions open or
+   closed) and how many people registered, how many teams formed and how many submitted.
+2. Select **New event**. Enter the name, a description, the start and end dates, and the maximum team size.
+3. Select **Create event**. You land on the event's overview with the message "Event created. It's hidden from
+   participants until you open registration."
+4. To change it later, open the event and select **Edit** in the menu under its name. Change what you need and select
+   **Save changes**. You go back to the overview with "Event saved."
+5. **Cancel** takes you back to the page you came from. If you changed anything, HackHub asks whether to discard your
+   changes first.
+
+The menu under an event's name has the event's pages: Overview, Edit, Criteria, Participants and Ranking.
 
 ### Set the judging criteria
 <!-- owner: Ollayorbek · card #10 · fill in your PR -->
@@ -205,7 +263,18 @@ results.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event from **Events I run**. The **Overview** shows how many people registered, how many teams formed,
+   how many submitted, and whether the criteria are set.
+2. Under **Event controls**, turn **Registration** on to list the event on Events so participants can register. Turn
+   it off to stop new registrations. You see "Registration opened." or "Registration closed."
+3. Turn **Submissions** on when teams may submit. When you turn it off, HackHub asks you to confirm: teams can't
+   submit or edit any more, and judges can start scoring. If a judge has already scored, the switch stays off and says
+   why.
+4. When the judges are done, select **Publish results**. If the button is greyed out, the line under it says what's
+   missing: close submissions first, or set the judging criteria first. The confirmation reminds you to check the
+   ranking preview, because HackHub doesn't track whether every team has been scored.
+5. After you publish, the overview says "Results were published." with a link to the public event page, and every
+   control is greyed out.
 
 ### See participants and teams
 <!-- owner: Abdurauf · card #11 · fill in your PR -->
@@ -213,9 +282,24 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 **What you can do:** see everyone registered for an event, every team with its members, and which teams have
 submitted.
 
+**Good to know:**
+- Only organizers can open this page.
+- People who haven't filled in their profile yet are shown by their email.
+- On a phone, each person and each team is shown as a card instead of a table row.
+
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event from **Events I run** and select **Participants** in the menu under its name.
+2. The **Participants** tab lists everyone registered, sorted by name: their email, faculty, team (or "No team") and
+   the day they registered. Select a name to open their profile.
+3. To find someone, type part of their name or email under **Search by name or email** and select **Search**.
+   **Clear search** shows everyone again.
+4. Select the **Teams** tab for every team: its members, how full it is ("2 of 4") and whether it has submitted.
+   A submitted team shows "Submitted" with the date, the project title and a **Repository** link that opens in a new
+   tab. Select **Show description** to read the project description.
+
+The number next to each tab is how many people registered and how many teams formed. Before anyone registers, the
+page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 ### Review and publish the ranking
 <!-- owner: Mehroj · card #16 · fill in your PR -->
@@ -231,7 +315,14 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event and select **Ranking** in the menu under its name. Until submissions are closed and the criteria
+   are set, the page says "The ranking appears once submissions are closed and criteria are set."
+2. Read the table: rank, team, members, the number of **Judges** who scored each team, and the total. If nobody has
+   scored yet, every total is 0 and the page says "No scores yet."
+3. Teams without a submission are listed under the table as "Not ranked (no submission)".
+4. When every judge has finished, select **Publish results** and confirm. Publishing can't be undone: scores lock and
+   the ranking appears on the public event page. You can also publish from the event's overview.
+5. Afterwards the page says "Results were published." with a link to the public event page.
 
 ---
 

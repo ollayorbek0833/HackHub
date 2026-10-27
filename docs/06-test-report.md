@@ -258,6 +258,43 @@ Last full run: _not yet run_
 | TC-115 | Test: assign | Not run |
 | TC-116 | Test: change and view roles | Not run |
 
+## Automated checks
+
+Unit tests (Vitest, `npm run test`) run in CI on every pull request. They back the cases below, but they don't replace
+them: a case is `Pass` only once its tester has checked it by hand in the browser. Most test names carry their TC
+number; where one doesn't, the table names the test. Keep this table in step when a PR adds tests.
+
+| Cases | Test file | Where |
+|---|---|---|
+| TC-73 | `src/lib/auth/permissions.test.ts` (permission matrix row by row) | `main` |
+| TC-118 | `src/lib/auth/dal.test.ts`, test "accepts a role granted after login, without logging in again" | `main` |
+| TC-09, TC-11 | `src/lib/validation/profile.test.ts` | `main` |
+| TC-10, TC-11, TC-13 | `src/app/(app)/profile/actions.test.ts` (saves the session user's profile, refuses a missing name or faculty) | PR #21 |
+| TC-64, TC-65, TC-70 | `src/lib/validation/submission.test.ts` | `main` |
+| TC-64…TC-67, TC-69…TC-71, TC-121 | `src/app/(app)/events/[eventId]/team/submit/actions.test.ts`, `src/lib/domain/submission.test.ts` | PR #24 |
+| TC-05, TC-101, TC-102, TC-105, TC-124 | `src/lib/domain/ranking.test.ts`, `src/lib/queries/ranking.test.ts` | `main` (TC-124 tags in this PR) |
+| TC-35, TC-67 | `src/lib/domain/event-state.test.ts` (`canRegister`, `canSubmit`) | PR #17 |
+| TC-23, TC-24, TC-29 | `src/lib/validation/event.test.ts` | PR #18 |
+| TC-24…TC-30 | `src/app/organizer/events/event-actions.test.ts` | PR #18 |
+| TC-123 | `src/lib/domain/event-switches.test.ts` | PR #19 |
+| TC-52…TC-57 | `src/app/organizer/events/[eventId]/participants/data.test.ts` | PR #20 |
+| TC-38, TC-39, TC-42, TC-43 | `src/lib/domain/registration.test.ts` | PR #22 |
+| TC-15…TC-18, TC-21, TC-22 | `src/lib/domain/teams.test.ts` | PR #23 |
+| TC-45 | `src/lib/validation/auth.test.ts` | PR #32 |
+| TC-59, TC-60, TC-61, TC-63 | `src/lib/domain/criteria.test.ts`, `src/lib/validation/criteria.test.ts` | PR #33 |
+| TC-76 | `src/lib/domain/roles.test.ts` | PR #34 |
+| TC-02, TC-04, TC-07, TC-08 | `src/lib/domain/scoring.test.ts` | PR #35 |
+
+End-to-end tests (Playwright, `npm run test:e2e`) run locally before a release, on the demo seed:
+
+| Cases | Spec | Where |
+|---|---|---|
+| — | `e2e/home.spec.ts` (home page) | `main` |
+| TC-44…TC-51 | `e2e/auth.spec.ts` | PR #32 |
+| TC-01, TC-02, TC-04, TC-07 | `e2e/judge.spec.ts` | PR #35 |
+
+Every other release case is checked by hand by its tester.
+
 ## Bug log
 
 | # | Found in | Description | Severity | Found by | Status |

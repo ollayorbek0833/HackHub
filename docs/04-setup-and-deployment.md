@@ -1,8 +1,8 @@
 # 4. Setup and deployment
 
-> **Status:** planned setup for the chosen stack: Next.js + Prisma + PostgreSQL, self-hosted on a VPS with Docker
-> (see [Architecture](03-architecture.md#technology-stack)). The app hasn't been scaffolded yet. When it is, check each
-> command against the real project, and fill in each _TBD_. That's the job of the "Deploy the system" card.
+> **Status:** checked against the repository on 27 Oct 2026 (Next.js 16, Prisma 7, PostgreSQL 18, Auth.js v5). Local
+> setup is final. Production has run at https://hackhub.mekhroj.uz since 26 Oct; the final release deploy is in
+> progress, see #28 ("Deploy the system").
 
 ## Environments
 
@@ -14,7 +14,7 @@
 ## Prerequisites
 
 - Git
-- Node.js 20 LTS or newer, and npm
+- Node.js 22 LTS and npm (CI and the production image use Node 22)
 - Docker and Docker Compose (for the local database and for production)
 
 ## Local setup
@@ -22,21 +22,44 @@
 ```bash
 git clone https://github.com/ollayorbek0833/HackHub.git
 cd HackHub
-npm install
-cp .env.example .env            # then fill in the values below
-docker compose up -d db         # local PostgreSQL
+npm install                     # also generates the Prisma client
+cp .env.example .env            # then fill in the values: see Configuration
+docker compose up -d            # local PostgreSQL 18 on localhost:5432
 npx prisma migrate dev          # create the schema
+npx prisma db seed              # the first organizer (and demo accounts with SEED_DEMO_USERS=true)
+npm run db:seed:demo            # demo events, teams, submissions and scores (local only)
+npx playwright install chromium # once, for the end-to-end tests
 npm run dev                     # http://localhost:3000
+```
+
+In `.env`, set at least `AUTH_SECRET` (`openssl rand -base64 32`), `SEED_ORGANIZER_EMAIL` and `SEED_ORGANIZER_PASSWORD`.
+For the demo accounts also set `SEED_DEMO_USERS=true` and `SEED_DEMO_PASSWORD` (at least 8 characters). The accounts
+and the two demo events are listed under [Demo data](#demo-data-local-only).
+
+**Postgres 18 volume.** The `postgres:18` image keeps its data in a subdirectory of `/var/lib/postgresql`, so
+`docker-compose.yml` mounts the volume at `/var/lib/postgresql`, not at `/var/lib/postgresql/data` as older guides
+say. If you still have a volume from an older Postgres version, the container won't start: remove the volume with
+`docker compose down -v` (this deletes the local data), then run `docker compose up -d` and the steps above again.
+
+**Port 5432 taken.** If another Postgres already uses port 5432 on your machine, change the host side of `ports` in
+`docker-compose.yml` (for example `"5433:5432"`) and the port in `DATABASE_URL` to match.
+
+Before opening a pull request, run what CI runs:
+
+```bash
+npm run lint && npm run typecheck && npm run test && npm run build
 ```
 
 Useful commands:
 
 | Command | What it does |
 |---|---|
+| `npm run typecheck` | Generates the route types, then runs `tsc --noEmit` |
+| `npm run test` | Unit tests (Vitest) |
+| `npm run test:e2e` | End-to-end tests (Playwright; starts the app itself) |
 | `npx prisma studio` | Browse the database in a web UI |
-| `npx prisma migrate dev --name <change>` | Create a migration after editing `prisma/schema.prisma` |
-| `npm test` | Unit tests (Vitest) |
-| `npx playwright test` | End-to-end tests |
+| `npx prisma migrate dev --name <card>-<change>` | Create a migration after editing `prisma/schema.prisma` ([System design](07-system-design.md#migration-workflow)) |
+| `npx prisma migrate reset --force && npx prisma db seed && npm run db:seed:demo` | Start again from a clean local database |
 
 ## Configuration
 
@@ -91,6 +114,9 @@ Internet ──▶ Cloudflare ──443──▶ nginx on the host (TLS) ──�
 - **db** keeps its data in a named volume, so it survives restarts and redeploys. It publishes no port.
 - **nginx** (on the host, not in Docker) holds the TLS certificate and proxies to the app.
 
+> **In progress, see #28.** This stack has served https://hackhub.mekhroj.uz since 26 Oct. Abdurauf owns the final
+> release deploy on Wed 28 Oct and confirms or corrects these steps there.
+
 ### First-time server setup
 
 The release runs on the team's dev server (`ssh ideal-dev-server`), checkout `/root/hackhub`. `hackhub.mekhroj.uz` is proxied through
@@ -102,40 +128,26 @@ For a new server:
 1. Point the domain's DNS at the VPS.
 2. Install Docker and the Compose plugin. Ports 80 and 443 stay with nginx; nothing else is opened.
 3. Clone the repo on the server and create the production `.env` there. Don't commit it.
-4. Add the site to nginx and get a certificate (for example `sudo certbot --nginx -d <domain>`), then `sudo nginx -t && sudo systemctl reload nginx`:
-
-```nginx
-# /etc/nginx/sites-available/hackhub  (TLS certificate managed on the host, e.g. certbot)
-server {
-    listen 443 ssl http2;
-    server_name <domain>;
-    ssl_certificate     /etc/letsencrypt/live/<domain>/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/<domain>/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-server {
-    listen 80;
-    server_name <domain>;
-    return 301 https://$host$request_uri;
-}
-```
+   Besides the variables in [Configuration](#configuration), set `APP_PORT` (the host port nginx proxies to) and
+   `AUTH_TRUST_HOST=true` (Auth.js then trusts nginx's forwarded headers). Never set `SEED_DEMO_USERS` in production.
+4. Copy [`deploy/nginx/hackhub.mekhroj.uz.conf`](../deploy/nginx/hackhub.mekhroj.uz.conf) to
+   `/etc/nginx/sites-available/`. Change the server name, the certificate paths (for example from
+   `sudo certbot --nginx -d <domain>`) and the upstream port to match `APP_PORT`, and link it into `sites-enabled`.
+   Then run `sudo nginx -t && sudo systemctl reload nginx`.
 
 ### Deploy
 
 ```bash
+ssh ideal-dev-server
+cd /root/hackhub
 git pull
 docker compose -f docker-compose.prod.yml up -d --build   # migrate runs first, then the app starts
-curl -fsS https://<domain>/api/health
+curl -fsS https://hackhub.mekhroj.uz/api/health
 ```
+
+The `migrate` service runs `prisma migrate deploy` and the seed (the first organizer only) on every deploy, so
+there's no separate migration step. The server hosts other apps: don't stop or change their containers or nginx
+sites.
 
 _TBD:_ automate these steps with a GitHub Actions workflow that SSHes into the VPS and runs them on every push to `main`.
 
@@ -173,6 +185,7 @@ changed (`git fetch origin && git diff HEAD origin/main --stat`), then run
 
 ## Smoke test after a deploy
 
+- [ ] `curl -fsS https://hackhub.mekhroj.uz/api/health` succeeds
 - [ ] The home page loads over HTTPS
 - [ ] A new user can register and log in
 - [ ] The events list loads

@@ -11,7 +11,8 @@
 //   all 8 participants registered, 3 teams (4, 2 and 1 members, participant8
 //   has none), submissions from the first two, and judge@hackhub.test's scores
 //   for the first team only.
-// - "Open Hack · live": registration and submissions open, no teams.
+// - "Open Hack · live": registration and submissions open, nobody registered,
+//   no teams and no criteria.
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { z } from "zod";
@@ -244,7 +245,19 @@ async function main() {
     });
     criterionId[criterion.name] = row.id;
   }
+  // Criteria added while testing would break the 100% total.
+  await prisma.criterion.deleteMany({
+    where: { eventId: demoId, name: { notIn: CRITERIA.map((c) => c.name) } },
+  });
 
+  // Registrations (and with them, team memberships) of anyone who isn't one
+  // of the 8 demo participants, e.g. a test account.
+  await prisma.eventRegistration.deleteMany({
+    where: {
+      eventId: demoId,
+      userId: { notIn: participants.map(({ email }) => userId[email]) },
+    },
+  });
   for (const { email } of participants) {
     await prisma.eventRegistration.upsert({
       where: { eventId_userId: { eventId: demoId, userId: userId[email] } },
@@ -253,6 +266,10 @@ async function main() {
     });
   }
 
+  // Teams created while testing, with their members and submissions.
+  await prisma.team.deleteMany({
+    where: { eventId: demoId, name: { notIn: TEAMS.map((t) => t.name) } },
+  });
   const teamId: Record<string, string> = {};
   for (const { name, inviteCode, members, submission } of TEAMS) {
     const team = await prisma.team.upsert({
@@ -284,8 +301,19 @@ async function main() {
         update: submission,
         create: { teamId: team.id, ...submission },
       });
+    } else {
+      await prisma.submission.deleteMany({ where: { teamId: team.id } });
     }
   }
+  // Anyone who joined a demo team while testing (participant8 has no team).
+  await prisma.teamMember.deleteMany({
+    where: {
+      eventId: demoId,
+      userId: {
+        notIn: TEAMS.flatMap(({ members }) => members.map((e) => userId[e])),
+      },
+    },
+  });
 
   // Back to "one judge has scored one team": drop scores added while testing,
   // e.g. judge2's, so a re-run resets the judging state too.
@@ -317,7 +345,7 @@ async function main() {
 
   // Open Hack · live: open for registration and submissions, with no teams,
   // for testing the participant flows from the start.
-  await upsertEvent("Open Hack · live", {
+  const openId = await upsertEvent("Open Hack · live", {
     description:
       "A hackathon that is happening now. Register, form a team and submit a project.",
     startDate: new Date("2026-11-07T00:00:00.000Z"),
@@ -326,6 +354,11 @@ async function main() {
     submissionsOpen: true,
     createdById: organizer.id,
   });
+  // Back to "nobody registered, no teams, no criteria". Deleting the teams
+  // also deletes their members and submissions.
+  await prisma.team.deleteMany({ where: { eventId: openId } });
+  await prisma.eventRegistration.deleteMany({ where: { eventId: openId } });
+  await prisma.criterion.deleteMany({ where: { eventId: openId } });
 }
 
 main()

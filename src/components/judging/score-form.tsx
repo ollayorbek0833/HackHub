@@ -77,11 +77,12 @@ export function ScoreForm({ action, criteria, lastSaved }: Props) {
                   <Input
                     id={c.field}
                     name={c.field}
-                    type="number"
+                    // Text, not type="number": a number input sends "" for
+                    // junk like "1e", which would read as "left empty" and
+                    // delete the saved score. The server checks the range.
+                    type="text"
                     inputMode="numeric"
-                    min={0}
-                    max={c.maxScore}
-                    step={1}
+                    autoComplete="off"
                     defaultValue={failed?.values?.[c.field] ?? c.value ?? ""}
                     className="h-11 w-24"
                     aria-invalid={!!errors}

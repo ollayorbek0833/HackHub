@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   nextTeamToScore,
+  planScoreChanges,
   parseScore,
   SCORING_MESSAGES,
   scoringBlockedReason,
@@ -57,6 +58,33 @@ describe("parseScore (TC-02, TC-07)", () => {
         error: "Enter a whole number from 0 to 10.",
       });
     }
+  });
+});
+
+describe("planScoreChanges", () => {
+  const criteria = [
+    { id: "a", maxScore: 10 },
+    { id: "b", maxScore: 5 },
+    { id: "c", maxScore: 10 },
+  ];
+
+  it("upserts typed scores, deletes only boxes submitted blank, keeps missing ones", () => {
+    expect(planScoreChanges(criteria, { a: "7", b: "" })).toEqual({
+      errors: {},
+      upserts: [{ criterionId: "a", value: 7 }],
+      deletes: ["b"],
+    });
+  });
+
+  it("refuses junk such as 1e instead of treating it as empty (review on #35)", () => {
+    expect(planScoreChanges(criteria, { a: "1e", b: "6", c: "" })).toEqual({
+      errors: {
+        a: "Enter a whole number from 0 to 10.",
+        b: "Enter a whole number from 0 to 5.",
+      },
+      upserts: [],
+      deletes: ["c"],
+    });
   });
 });
 

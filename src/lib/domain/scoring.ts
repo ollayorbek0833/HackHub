@@ -58,6 +58,36 @@ export function parseScore(
   return { ok: true, value };
 }
 
+export type ScoreChanges = {
+  /** Range errors by criterion id. Nothing is written when there are any. */
+  errors: Record<string, string>;
+  /** Scores to create or update. */
+  upserts: { criterionId: string; value: number }[];
+  /** Criteria whose box was submitted blank: this judge's score is removed. */
+  deletes: string[];
+};
+
+/**
+ * What a save does with the typed scores. Only a box that was submitted and
+ * left blank removes a score; a criterion missing from the form keeps its
+ * score untouched, so a stale or partial form never deletes anything by
+ * accident.
+ */
+export function planScoreChanges(
+  criteria: { id: string; maxScore: number }[],
+  typed: Record<string, string>,
+): ScoreChanges {
+  const changes: ScoreChanges = { errors: {}, upserts: [], deletes: [] };
+  for (const { id, maxScore } of criteria) {
+    if (!Object.hasOwn(typed, id)) continue;
+    const result = parseScore(typed[id], maxScore);
+    if (!result.ok) changes.errors[id] = result.error;
+    else if (result.value === null) changes.deletes.push(id);
+    else changes.upserts.push({ criterionId: id, value: result.value });
+  }
+  return changes;
+}
+
 /**
  * The team to open after "Save and go to next team": the first team after the
  * current one (in list order, wrapping round) that this judge hasn't fully

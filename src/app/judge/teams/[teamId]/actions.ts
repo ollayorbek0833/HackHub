@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/auth/dal";
 import { canScore } from "@/lib/domain/event-state";
 import {
   nextTeamToScore,
-  parseScore,
+  planScoreChanges,
   SCORING_MESSAGES,
   scoringBlockedReason,
 } from "@/lib/domain/scoring";
@@ -82,23 +82,22 @@ export async function saveScores(
       }
 
       // Only this event's criteria may be scored.
-      const criteria = new Map(team.event.criteria.map((c) => [c.id, c.maxScore]));
-      if (Object.keys(scores).some((id) => !criteria.has(id))) {
+      const known = new Set(team.event.criteria.map((c) => c.id));
+      if (Object.keys(scores).some((id) => !known.has(id))) {
         throw new RuleError(SCORING_MESSAGES.unknownCriterion);
       }
 
-      const fieldErrors: Record<string, string[]> = {};
-      const filled: { criterionId: string; value: number }[] = [];
-      const emptied: string[] = [];
-      for (const [criterionId, maxScore] of criteria) {
-        const result = parseScore(scores[criterionId] ?? "", maxScore);
-        if (!result.ok) fieldErrors[scoreFieldName(criterionId)] = [result.error];
-        else if (result.value === null) emptied.push(criterionId);
-        else filled.push({ criterionId, value: result.value });
+      // A box submitted blank removes the score; a missing box keeps it.
+      const { errors, upserts, deletes } = planScoreChanges(team.event.criteria, scores);
+      if (Object.keys(errors).length > 0) {
+        throw new InvalidScores(
+          Object.fromEntries(
+            Object.entries(errors).map(([id, message]) => [scoreFieldName(id), [message]]),
+          ),
+        );
       }
-      if (Object.keys(fieldErrors).length > 0) throw new InvalidScores(fieldErrors);
 
-      for (const { criterionId, value } of filled) {
+      for (const { criterionId, value } of upserts) {
         await tx.score.upsert({
           where: {
             judgeId_teamId_criterionId: { judgeId: judge.id, teamId, criterionId },
@@ -108,9 +107,9 @@ export async function saveScores(
           select: { id: true },
         });
       }
-      if (emptied.length > 0) {
+      if (deletes.length > 0) {
         await tx.score.deleteMany({
-          where: { judgeId: judge.id, teamId, criterionId: { in: emptied } },
+          where: { judgeId: judge.id, teamId, criterionId: { in: deletes } },
         });
       }
       return { id: team.event.id, name: team.event.name };

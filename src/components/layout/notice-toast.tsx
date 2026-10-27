@@ -8,6 +8,10 @@ import { toast } from "sonner";
 // toast from docs/08 once, then removes the parameter from the URL.
 const NOTICES: Record<string, { kind: "success" | "error"; text: string }> = {
   "logged-out": { kind: "success", text: "You're logged out." },
+  "account-created": {
+    kind: "success",
+    text: "Account created. Add your name and faculty to finish your profile.",
+  },
   "no-access": {
     kind: "error",
     text: "You don't have access to that page.",

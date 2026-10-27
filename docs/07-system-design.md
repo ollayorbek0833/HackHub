@@ -118,15 +118,21 @@ Use an interactive `prisma.$transaction(async (tx) => …)` whenever a rule read
 
 | Operation | Inside the transaction |
 |---|---|
-| **Save criteria** (#10) | Any score for the event → `RuleError` (locked, Decision 6). `validateCriteria(list)` (weights total 100). `deleteMany` the event's criteria, `createMany` the new list, so a half-saved total is never visible |
+| **Save criteria** (#10) | `SELECT … FROM events WHERE id = $1 FOR UPDATE` first, so a judge's score save can't commit between the check and the delete (as built, `lib/transactions/save-criteria.ts`). Any score for the event → `RuleError` (locked, Decision 6). `validateCriteria(list)` (weights total 100). `deleteMany` the event's criteria, `createMany` the new list, so a half-saved total is never visible |
 | **Create team** (#6) | Registered, not on a team. Create the team with a new invite code, then the creator's `TeamMember` with scalar ids. On a P2002 on `invite_code`, retry up to 3 times |
 | **Join team** (#6) | `SELECT id FROM teams WHERE id = $1 FOR UPDATE` (`tx.$queryRaw`) so two people can't take the last place. Then: registered, not on a team, team hasn't submitted, members < `maxTeamSize` (Decision 4) |
 | **Leave team** (#6) | Lock the team row. No submission yet (Decision 9). Delete the membership; if no members are left, delete the team |
-| **Save scores** (#8) | Event in judging (Decision 2), team has a submission, criteria belong to the event. Upsert each filled score; delete this judge's score for a criterion left empty |
-| **Change role** (#13) | Target isn't on any team (Decision 11) and isn't an organizer. Update the role |
+| **Submit project** (#7) | `FOR SHARE` on the event row, so "close submissions" can't slip in. `canSubmit(event)`, then upsert on `teamId` (one submission per team) |
+| **Save scores** (#8) | `FOR SHARE` on the event row, which serializes with Save criteria and Publish results (both `FOR UPDATE`). Event in judging (Decision 2), team has a submission, criteria belong to the event. Upsert each filled score; delete this judge's score only for a criterion submitted blank. Input that isn't a whole number in range is refused, never treated as blank |
+| **Change role** (#13) | `FOR UPDATE` on the target user row. Target isn't on any team (Decision 11) and isn't an organizer. Update the role |
+| **Switches and publish** (#12) | `FOR UPDATE` on the event row, then the rule from `lib/domain/event-switches.ts` |
 | **Edit event** (#9) | New `maxTeamSize` isn't below the largest current team |
 
-Publishing results (#12) is a single update of `resultsPublished`; the scoring rules read that flag.
+Publishing results (#12) is a single update of `resultsPublished` under the event row lock; the scoring rules read that flag.
+
+**Known gap (after the release):** Create and Join team check the participant's role before their transaction, so a join
+that starts just before an organizer makes that user a judge can still commit. The fix is to take `FOR SHARE` on the
+user row and re-check the role inside the team transaction. Logged in the [test report](06-test-report.md#bug-log).
 
 ### `lib/domain`: the rules as pure functions
 
@@ -549,10 +555,12 @@ npx shadcn@latest add input label textarea field select switch badge table tabs 
 ### Auth and session flow
 
 1. **Register**: zod checks the email and a password of at least 8 characters plus its confirmation (Decision 8); the email is lowercased;
-   `hashPassword`, `user.create` (P2002 → "already registered", TC-46); then `signIn("credentials", { email, password, redirectTo: "/profile" })`.
-2. **Log in**: the action calls `signIn("credentials", { email, password, redirect: false })`. A wrong email or password raises `AuthError`, which
-   becomes one `formError` that doesn't say which part was wrong; catch only `AuthError`. On success it redirects to the `callbackUrl` (only if it is
-   a same-site path) or to `ROLE_HOME` for the user's role.
+   `hashPassword`, `user.create` (P2002 → "already registered", TC-46); then `signIn("credentials", { email, password, redirect: false })` and
+   `redirect("/profile?notice=account-created")`, which shows the "Account created…" toast.
+2. **Log in**: the action calls `signIn("credentials", { email, password, redirect: false })`. A wrong email or password raises
+   `CredentialsSignin`, which becomes one `formError` that doesn't say which part was wrong. Any other `AuthError` (for example `authorize()`
+   failing because the database is down) is rethrown to `error.tsx`. On success it redirects to the `callbackUrl` (only if it is a same-site
+   path) or to `ROLE_HOME` for the user's role.
 3. **Session**: a JWT cookie with `sub` (the user id) and `role`. The id identifies the user; the role is only used for redirects.
 4. **Each request**: proxy redirects signed-out users from protected paths; the page or action calls `requireRole`, which reads the current role from
    the database.

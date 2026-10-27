@@ -137,7 +137,24 @@ docker compose -f docker-compose.prod.yml up -d --build   # migrate runs first, 
 curl -fsS https://<domain>/api/health
 ```
 
-_TBD:_ automate these steps with a GitHub Actions workflow that SSHes into the VPS and runs them on every push to `main`.
+### Automatic deploys
+
+A systemd timer on the server runs [`deploy/autodeploy.sh`](../deploy/autodeploy.sh) every 2 minutes. When `origin/main`
+has moved, it takes a `pg_dump` into `/root/hackhub-backups/` if the new commits add migrations. Then it fast-forwards,
+runs the `docker compose` command above and waits up to 2 minutes for `/api/health`. If the check fails, it goes back
+to the previous commit, rebuilds that and skips the failed commit until `main` moves again. Migrations are not
+reversed. Every run is logged to `/var/log/hackhub-autodeploy.log`. No secrets or SSH keys are in the repository.
+
+```bash
+# install or update (as root, in /root/hackhub)
+install -m 755 deploy/autodeploy.sh /usr/local/sbin/hackhub-autodeploy
+cp deploy/systemd/hackhub-autodeploy.service deploy/systemd/hackhub-autodeploy.timer /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now hackhub-autodeploy.timer
+
+hackhub-autodeploy --dry-run                 # what the next run would do
+tail -f /var/log/hackhub-autodeploy.log      # or: journalctl -u hackhub-autodeploy
+systemctl stop hackhub-autodeploy.timer      # pause (for example while deploying by hand); start to resume
+```
 
 ### Backups
 

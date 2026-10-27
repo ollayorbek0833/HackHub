@@ -1,0 +1,12 @@
+# Runs hackhub-autodeploy.service every 2 minutes (docs/04 > Automatic deploys).
+# Pause: systemctl stop hackhub-autodeploy.timer   Resume: systemctl start hackhub-autodeploy.timer
+[Unit]
+Description=HackHub: check origin/main for a new deploy every 2 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

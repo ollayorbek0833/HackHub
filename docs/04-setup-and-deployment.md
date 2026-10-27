@@ -49,6 +49,31 @@ Configuration is read from environment variables, in `.env` locally and set on t
 | `AUTH_SECRET` | Signs Auth.js sessions | output of `openssl rand -base64 32` |
 | `AUTH_URL` | Public URL of the app | `http://localhost:3000` locally, `https://<domain>` in production |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Credentials for the Postgres container | set per environment |
+| `SEED_ORGANIZER_EMAIL` / `SEED_ORGANIZER_PASSWORD` | The first organizer, created by `npx prisma db seed` | set per environment |
+| `SEED_DEMO_USERS` / `SEED_DEMO_PASSWORD` | Local and CI only, never production: create the demo accounts below, all with this password | `true` / at least 8 characters |
+
+### Demo data (local only)
+
+```bash
+npx prisma db seed        # the organizer, plus judge@ and participant1..3@ when SEED_DEMO_USERS=true
+npm run db:seed:demo      # demo events, teams and scores; safe to run again; refuses NODE_ENV=production
+# clean database:
+npx prisma migrate reset --force && npx prisma db seed && npm run db:seed:demo
+```
+
+| Account | Role | Password |
+|---|---|---|
+| `SEED_ORGANIZER_EMAIL` | Organizer | `SEED_ORGANIZER_PASSWORD` |
+| `judge@hackhub.test` | Judge (has scored Null Pointers) | `SEED_DEMO_PASSWORD` |
+| `judge2@hackhub.test` | Judge (nothing scored) | `SEED_DEMO_PASSWORD` |
+| `participant1..4@hackhub.test` | Participant, team Null Pointers (submitted) | `SEED_DEMO_PASSWORD` |
+| `participant5..6@hackhub.test` | Participant, team Byte Me (submitted) | `SEED_DEMO_PASSWORD` |
+| `participant7@hackhub.test` | Participant, team Lone Wolf (no submission) | `SEED_DEMO_PASSWORD` |
+| `participant8@hackhub.test` | Participant, registered, no team | `SEED_DEMO_PASSWORD` |
+
+Events: **Demo Hack · judging** (registration and submissions closed, ready for judging and publishing) and
+**Open Hack · live** (registration and submissions open, no teams). Running the demo seed again puts both events
+back in this state. Never run it in production.
 
 ## Production deployment (VPS + Docker)
 

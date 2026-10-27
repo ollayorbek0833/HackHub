@@ -174,7 +174,7 @@ async function upsertEvent(
   const event = existing
     ? await prisma.event.update({
         where: { id: existing.id },
-        data: { ...data, resultsPublished: false },
+        data: { ...data, maxTeamSize: 4, resultsPublished: false },
         select: { id: true },
       })
     : await prisma.event.create({
@@ -287,7 +287,15 @@ async function main() {
     }
   }
 
+  // Back to "one judge has scored one team": drop scores added while testing,
+  // e.g. judge2's, so a re-run resets the judging state too.
   const judgeId = userId["judge@hackhub.test"];
+  await prisma.score.deleteMany({
+    where: {
+      team: { eventId: demoId },
+      NOT: { judgeId, teamId: teamId["Null Pointers"] },
+    },
+  });
   for (const [criterion, value] of Object.entries(SCORES)) {
     await prisma.score.upsert({
       where: {

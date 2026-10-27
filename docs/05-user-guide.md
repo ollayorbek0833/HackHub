@@ -266,7 +266,13 @@ The menu under an event's name has the event's pages: Overview, Edit, Criteria, 
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Choose **Users** in the navigation.
+2. Find the person: type part of their name or email in **Search by name or email**, pick a **Role** if you like,
+   and choose **Search**.
+3. Choose **Make judge** on a participant, or **Make participant** on a judge. You see "{name} is now a judge." (or
+   "a participant") and the row updates. To undo, choose the other button.
+4. If the button is greyed out, the line under it says why, for example "Ana is on a team in Demo Hack, so they
+   can't become a judge."
 
 ### Open and close registration and submissions
 <!-- owner: Abdurauf · card #12 · fill in your PR -->

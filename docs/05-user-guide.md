@@ -128,7 +128,18 @@ before your team submits.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Register for the event first, then open it from **My events** and select **Create or join a team**.
+2. **To create a team:** under "Create a team", type a team name (2–40 characters, not already used in this event)
+   and select **Create team**. You're its first member.
+3. **To share it:** your team page shows the 6-character invite code. Select **Copy code** and send it to your
+   teammates, or read it out: it has no 0/O or 1/I, so it's hard to mistype.
+4. **To join a team:** under "Join with a code", enter the code your teammate sent (upper or lower case) and select
+   **Join team**. If it doesn't work, HackHub says why: wrong code, team full, you're already on a team, or the team
+   has already submitted.
+5. Your team page lists every member (select a name to see their profile), shows "{n} of {max}" and whether your team
+   has submitted, with a button to submit or edit your project while submissions are open.
+6. **To leave:** select **Leave team** and confirm. If you're the last member, the team is deleted. After your team
+   submits, the button is disabled.
 
 ### Submit your project
 <!-- owner: Mehroj · card #7 · fill in your PR -->

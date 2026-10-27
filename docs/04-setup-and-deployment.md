@@ -149,7 +149,7 @@ The `migrate` service runs `prisma migrate deploy` and the seed (the first organ
 there's no separate migration step. The server hosts other apps: don't stop or change their containers or nginx
 sites.
 
-_TBD:_ automate these steps with a GitHub Actions workflow that SSHes into the VPS and runs them on every push to `main`.
+Since 27 Oct these steps run automatically when `main` moves: see [Automatic deploys](#automatic-deploys).
 
 ### Backups
 
@@ -158,6 +158,30 @@ docker compose -f docker-compose.prod.yml exec db pg_dump -U "$POSTGRES_USER" "$
 ```
 
 Take a backup before every deploy that includes a migration.
+
+### Automatic deploys
+
+A systemd timer on the server runs [`deploy/autodeploy.sh`](../deploy/autodeploy.sh) every 2 minutes. When `origin/main`
+has moved, it takes a `pg_dump` into `/root/hackhub-backups/` if the new commits add migrations. Then it fast-forwards,
+runs the `docker compose` command above and waits up to 2 minutes for `/api/health`. If the check fails, it goes back
+to the previous commit, rebuilds that and skips the failed commit until `main` moves again. Migrations are not
+reversed. Every run is logged to `/var/log/hackhub-autodeploy.log`. No secrets or SSH keys are in the repository.
+
+```bash
+# install or update (as root, in /root/hackhub)
+install -m 755 deploy/autodeploy.sh /usr/local/sbin/hackhub-autodeploy
+cp deploy/systemd/hackhub-autodeploy.service deploy/systemd/hackhub-autodeploy.timer /etc/systemd/system/
+cp deploy/logrotate/hackhub-autodeploy /etc/logrotate.d/
+systemctl daemon-reload && systemctl enable --now hackhub-autodeploy.timer
+
+hackhub-autodeploy --dry-run                 # what the next run would do
+tail -f /var/log/hackhub-autodeploy.log      # or: journalctl -u hackhub-autodeploy
+systemctl stop hackhub-autodeploy.timer      # pause (for example while deploying by hand); start to resume
+```
+
+If `main` is ever force-pushed, the timer stops deploying and logs one `ERROR … not a fast-forward`. Check what
+changed (`git fetch origin && git diff HEAD origin/main --stat`), then run
+`git reset --hard origin/main && systemctl start hackhub-autodeploy.service`.
 
 ## Smoke test after a deploy
 

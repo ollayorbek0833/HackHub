@@ -1,0 +1,21 @@
+# Deploys origin/main to production when it moves (docs/04 > Automatic deploys).
+# Started by hackhub-autodeploy.timer. Install:
+#   install -m 755 deploy/autodeploy.sh /usr/local/sbin/hackhub-autodeploy
+#   cp deploy/systemd/hackhub-autodeploy.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now hackhub-autodeploy.timer
+[Unit]
+Description=HackHub: deploy origin/main if it moved
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/hackhub-autodeploy
+Environment=HACKHUB_DIR=/root/hackhub
+# The app's host port (APP_PORT in the server's .env), so the check doesn't
+# depend on Cloudflare.
+Environment=HACKHUB_HEALTH_URL=http://127.0.0.1:3120/api/health
+Environment=HOME=/root
+# An image build can take a few minutes.
+TimeoutStartSec=20min

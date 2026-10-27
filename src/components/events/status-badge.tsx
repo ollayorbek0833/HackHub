@@ -1,10 +1,12 @@
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, CircleIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 // Status badges (docs/08 > Shared components > Status badge). Every badge says
-// its state in words; colour and the check icon only add to the label.
+// its state in words; colour and the icon only add to the label. The success
+// colour is kept for "done" item states (Registered, Submitted, Scored); an
+// event switch that is open gets the primary tint and a dot instead.
 
 export function StatusBadge({
   on,
@@ -27,6 +29,25 @@ export function StatusBadge({
   );
 }
 
+/** An event state: "open" is tinted with a dot, "closed" is a plain outline. */
+function EventBadge({ open, children }: { open: boolean; children: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(open && "border-primary/50 bg-primary/15 text-foreground")}
+    >
+      {open && (
+        <CircleIcon
+          aria-hidden
+          data-icon="inline-start"
+          className="fill-current text-ring"
+        />
+      )}
+      {children}
+    </Badge>
+  );
+}
+
 type EventFlags = {
   registrationOpen: boolean;
   submissionsOpen: boolean;
@@ -44,18 +65,18 @@ export function EventStatusBadges({
   return (
     <ul className={cn("flex flex-wrap gap-2", className)} aria-label="Status">
       <li>
-        <StatusBadge on={event.registrationOpen}>
+        <EventBadge open={event.registrationOpen}>
           {event.registrationOpen ? "Registration open" : "Registration closed"}
-        </StatusBadge>
+        </EventBadge>
       </li>
       <li>
-        <StatusBadge on={event.submissionsOpen}>
+        <EventBadge open={event.submissionsOpen}>
           {event.submissionsOpen ? "Submissions open" : "Submissions closed"}
-        </StatusBadge>
+        </EventBadge>
       </li>
       {event.resultsPublished && (
         <li>
-          <StatusBadge on>Results published</StatusBadge>
+          <EventBadge open>Results published</EventBadge>
         </li>
       )}
     </ul>

@@ -164,7 +164,15 @@ are open, and update it until they close.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. On your team page, select **Submit project**. (Until the organizer opens submissions, the page says "Submissions
+   haven't opened yet.")
+2. Fill in the **Project title**, a **Description** (the counter shows how many of the 2000 characters you've used)
+   and the **Repository link**, for example `https://github.com/team/project`.
+3. Press **Submit project**. You're taken back to your team page with "Project submitted."
+4. To change something while submissions are open, any team member opens the same page again: the form is filled
+   in, and **Save changes** updates it ("Submission updated."). The page shows when it was last updated.
+5. Once the organizer closes submissions, the page shows your submission read-only. If your team didn't submit, it
+   says so: that team won't be ranked.
 
 ### See the results
 <!-- owner: Mehroj · card #16 · fill in your PR -->

@@ -256,12 +256,6 @@
     }
   }
 
-  /* The phone tab bar reserves its height; ActionDock sits above it. */
-  @media (width < 48rem) {
-    body:has([data-tab-bar]) {
-      --tab-bar-h: 4rem;
-    }
-  }
 }
 
 /* Density by role: one system, two spacing scales. Participant pages are
@@ -285,4 +279,23 @@
 }
 [data-slot="table-cell"] {
   padding-block: var(--density-cell-y);
+}
+
+/* The phone tab bar reserves its height; ActionDock sits above it. Both are
+   fixed below md. The page ends with room for the dock (the tab bar has its
+   own spacer), and focused fields scroll clear of both. Unlayered, like the
+   :root defaults these override (a layered rule would lose to them). */
+@media (width < 48rem) {
+  :root:has([data-tab-bar]) {
+    --tab-bar-h: 4rem;
+  }
+  body:has([data-action-dock]) {
+    padding-bottom: var(--action-dock-h, 4.5rem);
+  }
+  html {
+    scroll-padding-bottom: calc(
+      var(--tab-bar-h) + var(--action-dock-h, 0px) +
+        env(safe-area-inset-bottom) + 1rem
+    );
+  }
 }

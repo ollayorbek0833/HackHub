@@ -126,14 +126,14 @@ export function ProfileForm({
             <ul className="flex flex-wrap gap-2" aria-label="Your skills">
               {skills.map((skill) => (
                 <li key={skill}>
-                  <Badge variant="secondary" className="h-8 gap-1 pr-1">
+                  <Badge variant="secondary" className="h-11 gap-1 pr-0 md:h-8 md:pr-1">
                     {skill}
                     <button
                       type="button"
                       onClick={() =>
                         setSkills(skills.filter((s) => s !== skill))
                       }
-                      className="hover:bg-background/40 focus-visible:ring-ring inline-flex size-6 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none"
+                      className="hover:bg-background/40 focus-visible:ring-ring inline-flex size-11 items-center justify-center rounded-full md:size-6 focus-visible:ring-2 focus-visible:outline-none"
                       aria-label={`Remove ${skill}`}
                     >
                       <X className="size-3.5" aria-hidden />

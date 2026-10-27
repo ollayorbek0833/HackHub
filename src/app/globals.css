@@ -106,3 +106,15 @@
     @apply font-sans;
     }
 }
+
+/* Style pass (#26): touch targets of at least 44 px on phone (docs/08 >
+   Accessibility). shadcn's inputs and select triggers are 32 px; below md they
+   grow to 44 px everywhere, without editing components/ui. */
+@layer base {
+  @media (width < 48rem) {
+    [data-slot="input"],
+    [data-slot="select-trigger"] {
+      min-height: 2.75rem;
+    }
+  }
+}

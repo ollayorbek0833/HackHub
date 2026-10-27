@@ -89,7 +89,7 @@ export function ProfileCard({
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary text-sm break-all underline-offset-4 hover:underline"
+                        className="text-sm break-all text-foreground underline underline-offset-4 hover:text-ring"
                       >
                         {link}
                       </a>
@@ -108,7 +108,7 @@ export function ProfileCard({
         {isOwn && (
           <Link
             href="/profile"
-            className="text-primary inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4 hover:text-ring"
           >
             Edit my profile
           </Link>

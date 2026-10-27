@@ -2,7 +2,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 // Event status badges (docs/08 > Shared components > Status badge). Each badge
-// says its state in words; the lime "open" colour only adds to the label.
+// says its state in words; the tint only adds to the label. "Open" uses the
+// primary tint, as on the participant pages: docs/08 keeps the success colour
+// for Registered, Submitted and Scored (style pass, #26).
 
 type EventFlags = {
   registrationOpen: boolean;
@@ -13,8 +15,8 @@ type EventFlags = {
 function StatusBadge({ on, children }: { on: boolean; children: string }) {
   return (
     <Badge
-      variant={on ? "default" : "outline"}
-      className={cn(on && "bg-success text-success-foreground")}
+      variant="outline"
+      className={cn(on && "border-primary/50 bg-primary/15 text-foreground")}
     >
       {children}
     </Badge>

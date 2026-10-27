@@ -23,7 +23,7 @@ export function SubmissionView({
             href={submission.repoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary break-all underline-offset-4 hover:underline"
+            className="break-all text-foreground underline underline-offset-4 hover:text-ring"
           >
             {submission.repoUrl}
           </a>

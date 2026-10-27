@@ -107,7 +107,7 @@ async function MyEventsList() {
               <h2 className="text-lg font-semibold break-words">
                 <Link
                   href={`/events/${event.id}`}
-                  className="rounded-sm outline-none hover:underline hover:underline-offset-4 focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="inline-flex min-h-11 items-center rounded-sm outline-none hover:underline hover:underline-offset-4 focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {event.name}
                 </Link>

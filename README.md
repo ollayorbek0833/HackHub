@@ -1,18 +1,48 @@
 # HackHub
 
-We are building a web platform that runs a hackathon from start to finish. Participants
-register, create a profile with their skills, and either join a team or get matched with one.
-Organizers set up the event, review registrations, and publish the schedule and
-challenge brief. During the event, teams submit their projects, and judges score each
-submission against published criteria directly in the system. The platform calculates the
-results and displays the final ranking.
-Our team of four covers the full development cycle: planning and requirements,
-implementation, interface design, and testing and deployment. The project runs for one
-semester and ends with a working, deployed system plus its documentation.
-The build stays inside four people's capacity, and every role has real work: the designer
-owns the interface, QA owns testing and deployment, the developer builds, the PM runs
-the process.
+HackHub is a web platform that runs a hackathon from start to finish. Participants register, create a profile with
+their skills, browse events, register for one, and create a team or join one with its invite code. Organizers set up
+the event, set the judging criteria and their weights, and open and close registration and submissions. Teams submit
+their projects. Every judge scores every submitted team against the criteria. HackHub calculates the weighted results,
+and the organizer publishes the final ranking.
+
+Live: https://hackhub.mekhroj.uz
+
+## Team
+
+| Person | Role | Responsibilities |
+|---|---|---|
+| Mehroj Majidov | Project Manager | Runs the process, owns scope and the board, coordinates testing, writes the documentation |
+| Ollayorbek Masharipov | Developer | Core build: auth and roles, submissions, responsive layout, judging logic |
+| Xurliman Gobenova | Designer | Interface design and the participant-facing screens |
+| Abdurauf Qarshiboyev | Developer, organizer side + ops | Organizer features and deployment |
+| Abduaziz Kayumov | Mentor | Advises and reviews |
+
+Each card is tested by someone other than the person who built it.
+
+## Stack
+
+Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4 with shadcn/ui, Prisma 7 with PostgreSQL 18, Auth.js v5
+(email and password), zod, Vitest and Playwright. Production runs in Docker behind nginx.
+
+## Getting started
+
+You need Node.js 22, npm and Docker.
+
+```bash
+npm install
+cp .env.example .env     # fill in AUTH_SECRET and SEED_ORGANIZER_*
+docker compose up -d
+npx prisma migrate dev
+npx prisma db seed
+npm run db:seed:demo     # demo events and accounts (set SEED_DEMO_* in .env first)
+npm run dev              # http://localhost:3000
+```
+
+The full steps, the demo data and the production deploy are in
+[Setup and deployment](docs/04-setup-and-deployment.md).
 
 ## Documentation
 
-Project documentation is in [`docs/`](docs/README.md): requirements, scope decisions, architecture, setup and deployment, user guide and test report.
+Project documentation is in [`docs/`](docs/README.md): requirements, scope decisions, architecture, setup and
+deployment, user guide, test report, system design and the UI specification.

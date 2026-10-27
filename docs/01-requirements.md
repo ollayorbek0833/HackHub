@@ -2,17 +2,21 @@
 
 ## Product summary
 
-Participants register, create a profile with their skills, browse events, register for one, and create or join a team.
-Organizers set up the event, set the judging criteria, publish the schedule and challenge brief, and open and close
-registration and submissions. Teams submit their projects. Judges score the teams assigned to them against the
-published criteria. The platform calculates the results and shows the final ranking.
+Participants register, create a profile with their skills, browse events, register for one, and create a team or join
+one with its invite code. Organizers set up the event, set the judging criteria and their weights, and open and close
+registration and submissions. Teams submit their projects. Every judge scores every submitted team against the
+criteria. The platform calculates the weighted results, and the organizer publishes the final ranking.
+
+For the Oct 28 release there's no matchmaking (teams form outside the platform), no judge assignment (every judge
+scores every team, Decision 1), and the event schedule and challenge brief come after the release. The requirements
+below are the original list; [Scope decisions](02-scope-decisions.md#product-rules) has the binding rules.
 
 ## Roles
 
 | Role | Who it is | Main goal |
 |---|---|---|
 | Participant | A student taking part in the hackathon | Register, form a team, submit a project |
-| Judge | A person who scores projects | Score their assigned teams fairly and leave feedback |
+| Judge | A person who scores projects | Score every submitted team fairly against the criteria |
 | Organizer | The person running the event | Set up the event, manage the process, publish the results |
 
 ## Priority scale
@@ -89,7 +93,7 @@ The original charter listed 20 numbered requirements. Here is where each one end
 | 4 | Create or join a team | P4 |
 | 5 | List of participants looking for a team | **Cut** |
 | 6 | Submit a project | P5 |
-| 7 | Edit the submission until the deadline | **Cut** |
+| 7 | Edit the submission until the deadline | Cut, then brought back on 26 Oct as part of P5: edit while submissions are open ([Scope decisions](02-scope-decisions.md#items-brought-back)) |
 | 8 | Event schedule and challenge brief | P6 (+ O7) |
 | 9 | Judge sees only assigned teams | J2 |
 | 10 | Score teams against criteria | J1 |

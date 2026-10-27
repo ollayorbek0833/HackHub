@@ -17,18 +17,19 @@
 - **Where.** Local environment during development, and production for the post-deploy smoke test
   (see [Setup and deployment](04-setup-and-deployment.md#smoke-test-after-a-deploy)).
 - **Results.** `Pass`, `Fail (bug #n)`, `Blocked`, or `Not run`. Each failure gets an entry in the bug log below.
-  Each result names its tester and date. Results marked *Mehroj* on 27 Oct were run by Mehroj's coding agent in a
-  real browser (Playwright, local build, demo seed). Mehroj clicks through them himself before the sign-off.
+  Each result names its tester and date. The 27 Oct results were run by each tester's coding agent: a real browser
+  driven by Playwright (headless Chromium) on a local build with the demo seed, plus the unit tests. Every tester
+  clicks through their own cases by hand before the sign-off.
 
 ## Summary
 
 | Area | Cases | Pass | Fail | Not run |
 |---|---|---|---|---|
-| Release (Must have) | 95 | 90 | 0 | 5 |
+| Release (Must have) | 95 | 94 | 0 | 1 |
 | After the release | 33 | — | — | 33 |
 
 Last full run: 27 Oct 2026, 20:00, on `main` at `a971e96`, the same code as `000dcb1` (local, demo seed): every card's tester
-results above, then a regression run of the cases no tester had run (Mehroj's agent). The production run is in
+results above, then a regression run of the cases no tester had run. The production run is in
 [Release test run](#release-test-run).
 
 ## Test cases
@@ -54,9 +55,9 @@ results above, then a regression run of the cases no tester had run (Mehroj's ag
 | TC-09 | Profile fields: name, faculty, skills, bio, contact/links | Pass (Abdurauf, 27 Oct) |
 | TC-10 | Create and edit profile page | Pass (Abdurauf, 27 Oct) |
 | TC-11 | Validate required fields | Pass (Abdurauf, 27 Oct) |
-| TC-12 | Show profile to other users (read-only view) | Not run by a tester (passes in Mehroj's regression on `main`, 27 Oct; Mehroj built it, so Abdurauf confirms) |
+| TC-12 | Show profile to other users (read-only view) | Pass (Abdurauf, 27 Oct) |
 | TC-13 | Test: create and update profile | Pass (Abdurauf, 27 Oct) |
-| TC-127 | Another user's profile is read-only and doesn't show the email (Decision 12) | Not run by a tester (passes in Mehroj's regression on `main`, 27 Oct; Mehroj built it, so Abdurauf confirms) |
+| TC-127 | Another user's profile is read-only and doesn't show the email (Decision 12) | Pass (Abdurauf, 27 Oct) |
 
 ### Create a team or join an existing one (Must have)
 
@@ -234,9 +235,9 @@ results above, then a regression run of the cases no tester had run (Mehroj's ag
 | TC-101 | Rank teams by weighted total score | Pass (Abdurauf, 27 Oct) |
 | TC-102 | Tie-break: compare scores on the highest-weight criterion, then the next highest | Not run by hand (needs a real tie; covered by `ranking.test.ts` in CI) |
 | TC-103 | Organizer reviews the preview (judge count per team), then publishes from the overview or the ranking page | Pass (Abdurauf, 27 Oct) |
-| TC-104 | Ranking visible to everyone only after publishing | Not run by a tester (passes in Mehroj's regression on `main`, 27 Oct; Mehroj built it, so Abdurauf confirms) |
+| TC-104 | Ranking visible to everyone only after publishing | Pass (Abdurauf, 27 Oct) |
 | TC-105 | Test: ranking order | Pass (Abdurauf, 27 Oct) |
-| TC-106 | Test: unpublished ranking hidden | Not run by a tester (passes in Mehroj's regression on `main`, 27 Oct; Mehroj built it, so Abdurauf confirms) |
+| TC-106 | Test: unpublished ranking hidden | Pass (Abdurauf, 27 Oct) |
 | TC-124 | A team without a submission isn't ranked; a criterion nobody scored counts as 0 (Decision 10) | Pass (Abdurauf, 27 Oct) |
 
 ### Works on both screens: desktop / phone (Should have)

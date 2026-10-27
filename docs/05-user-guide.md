@@ -85,10 +85,19 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 **Good to know:**
 - Events appear in the list only while their registration is open.
 - You can register for each event once. If registration is closed, you can't register.
+- You need a name and faculty on your profile first. Until then the event page shows "Complete your profile before
+  registering." with a link to your profile.
+- Judges and organizers don't register. Organizers see "Manage event" on the event page instead.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **Events** in the top navigation. Each card shows the event's dates, the maximum team size and the start of
+   its description. Events you're already registered for have a "Registered" badge.
+2. Select an event to open its page. It shows the full description, the status badges and how many people have
+   registered.
+3. Select **Register**. The page now says "You're registered" and offers **Create or join a team**.
+4. Not logged in? Select **Log in to register**; after logging in you come back to the event.
+5. If registration has closed, the button reads "Registration closed" and can't be used.
 
 ### My events
 <!-- owner: Xurliman · card #5 · fill in your PR -->
@@ -98,7 +107,11 @@ once they're published.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My events** in the top navigation. It's also where you land after logging in.
+2. Each event shows its dates and status, your team (or "No team yet") and whether your team has submitted.
+3. Select **Go to my team** or **Create or join a team** to manage your team, or **Open event** for the event page.
+4. Once the organizer publishes results, select **Results published: see the ranking** to jump to the ranking.
+5. Events whose results are still to come are listed first, soonest first.
 
 ### Form a team
 <!-- owner: Xurliman · card #6 · fill in your PR -->

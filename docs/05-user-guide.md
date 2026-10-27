@@ -71,7 +71,16 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My profile** from the user menu (top right; on a phone, the menu button). Until your name and faculty are
+   saved, a notice at the top reminds you to add them.
+2. Fill in **Name** and **Faculty**. Your email and role are shown above the form; you can't change them here.
+3. To add a skill, type it and press Enter or **Add skill**. Remove one with the **×** on its tag.
+4. Write a short **Bio** if you like. The counter under it shows how many of the 500 characters you've used.
+5. Add up to 3 **Links**, each starting with `https://`. Use **Add link** for another row.
+6. Press **Save profile**. You see "Profile saved." The first time you save after creating your account, you're
+   taken to the events list. If something is missing or too long, the message appears under that field.
+7. To see someone else's profile, select their name in a team list or the ranking. Their profile is read-only. On
+   your own, **Edit my profile** brings you back to the form.
 
 ---
 

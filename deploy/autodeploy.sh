@@ -60,8 +60,17 @@ main() {
     fail "checkout is not on main ($(git rev-parse --abbrev-ref HEAD)); not deploying"
   [ -z "$(git status --porcelain --untracked-files=no)" ] ||
     fail "checkout has local changes; not deploying"
-  git merge-base --is-ancestor "$before" "$after" ||
-    fail "origin/main ${after:0:7} is not a fast-forward of ${before:0:7}; not deploying"
+  if ! git merge-base --is-ancestor "$before" "$after"; then
+    # main was rewritten. Say so once per new origin/main, not every 2 minutes;
+    # docs/04 > Automatic deploys has the manual steps.
+    if [ "$after" != "$(cat "$STATE_DIR/refused-sha" 2>/dev/null)" ]; then
+      echo "$after" >"$STATE_DIR/refused-sha"
+      log "ERROR origin/main ${after:0:7} is not a fast-forward of ${before:0:7}; not deploying." \
+        "Check it and run: git reset --hard origin/main && systemctl start hackhub-autodeploy.service"
+    fi
+    exit 1
+  fi
+  rm -f "$STATE_DIR/refused-sha"
 
   local migrations
   migrations="$(git diff --name-only "$before" "$after" -- prisma/migrations)"
@@ -88,8 +97,9 @@ main() {
   fi
 
   # Roll back to the commit that was running.
-  log "!!! FAILED ${after:0:7}: rolling back to ${before:0:7}" \
-    "$([ -n "$migrations" ] && echo "(migrations stay applied; backup in $BACKUP_DIR)")"
+  local note=""
+  [ -n "$migrations" ] && note=" (migrations stay applied; backup in $BACKUP_DIR)"
+  log "!!! FAILED ${after:0:7}: rolling back to ${before:0:7}${note}"
   echo "$after" >"$STATE_DIR/failed-sha"
   git reset --quiet --hard "$before"
   if build_and_check; then

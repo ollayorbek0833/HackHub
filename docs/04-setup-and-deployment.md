@@ -159,12 +159,17 @@ reversed. Every run is logged to `/var/log/hackhub-autodeploy.log`. No secrets o
 # install or update (as root, in /root/hackhub)
 install -m 755 deploy/autodeploy.sh /usr/local/sbin/hackhub-autodeploy
 cp deploy/systemd/hackhub-autodeploy.service deploy/systemd/hackhub-autodeploy.timer /etc/systemd/system/
+cp deploy/logrotate/hackhub-autodeploy /etc/logrotate.d/
 systemctl daemon-reload && systemctl enable --now hackhub-autodeploy.timer
 
 hackhub-autodeploy --dry-run                 # what the next run would do
 tail -f /var/log/hackhub-autodeploy.log      # or: journalctl -u hackhub-autodeploy
 systemctl stop hackhub-autodeploy.timer      # pause (for example while deploying by hand); start to resume
 ```
+
+If `main` is ever force-pushed, the timer stops deploying and logs one `ERROR … not a fast-forward`. Check what
+changed (`git fetch origin && git diff HEAD origin/main --stat`), then run
+`git reset --hard origin/main && systemctl start hackhub-autodeploy.service`.
 
 ## Smoke test after a deploy
 

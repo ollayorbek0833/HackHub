@@ -1,0 +1,9 @@
+# /etc/logrotate.d/hackhub-autodeploy (docs/04 > Automatic deploys)
+/var/log/hackhub-autodeploy.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+}

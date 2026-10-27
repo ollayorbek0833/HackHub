@@ -185,7 +185,12 @@ are open, and update it until they close.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event's page, from **My events** or the link you were given. Before the organizer publishes, there's no
+   ranking on it.
+2. Once results are published, the **Final ranking** section lists each team's rank, name, members and total.
+3. If your team is in the list, its row is labelled **Your team**. When you're signed in, select a member's name to
+   open their profile.
+4. On a phone, each team is shown as a card with its rank and total at the top.
 
 ---
 
@@ -310,7 +315,14 @@ page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event and select **Ranking** in the menu under its name. Until submissions are closed and the criteria
+   are set, the page says "The ranking appears once submissions are closed and criteria are set."
+2. Read the table: rank, team, members, the number of **Judges** who scored each team, and the total. If nobody has
+   scored yet, every total is 0 and the page says "No scores yet."
+3. Teams without a submission are listed under the table as "Not ranked (no submission)".
+4. When every judge has finished, select **Publish results** and confirm. Publishing can't be undone: scores lock and
+   the ranking appears on the public event page. You can also publish from the event's overview.
+5. Afterwards the page says "Results were published." with a link to the public event page.
 
 ---
 

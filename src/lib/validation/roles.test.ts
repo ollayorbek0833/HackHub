@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { setUserRoleSchema, usersFilterSchema } from "./roles";
+import { setUserRoleSchema, userIdSchema, usersFilterSchema } from "./roles";
+
+describe("userIdSchema", () => {
+  it("accepts a cuid and refuses anything else", () => {
+    expect(userIdSchema.safeParse("cmvqpyg5b000ajxp118sgjwv1").success).toBe(true);
+    for (const bad of ["", "x".repeat(65), "a b", "id'--", 42, null]) {
+      expect(userIdSchema.safeParse(bad).success, String(bad)).toBe(false);
+    }
+  });
+});
 
 describe("setUserRoleSchema", () => {
   it("accepts only participant or judge", () => {

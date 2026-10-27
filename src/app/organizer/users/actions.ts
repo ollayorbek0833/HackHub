@@ -7,7 +7,7 @@ import { RuleError, type ActionState } from "@/lib/action-state";
 import { requireRole } from "@/lib/auth/dal";
 import { ROLE_MESSAGES, roleChangeError } from "@/lib/domain/roles";
 import { prisma } from "@/lib/prisma";
-import { setUserRoleSchema } from "@/lib/validation/roles";
+import { setUserRoleSchema, userIdSchema } from "@/lib/validation/roles";
 
 /**
  * Makes a participant a judge or a judge a participant (docs/07 >
@@ -23,6 +23,8 @@ export async function setUserRole(
   formData: FormData,
 ): Promise<ActionState> {
   const organizer = await requireRole("ORGANIZER");
+  // An id that can't be a user id is the same as an unknown user.
+  if (!userIdSchema.safeParse(userId).success) notFound();
 
   const parsed = setUserRoleSchema.safeParse({ role: formData.get("role") });
   if (!parsed.success) {

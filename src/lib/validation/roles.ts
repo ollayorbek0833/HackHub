@@ -8,6 +8,9 @@ export const setUserRoleSchema = z.object({
   }),
 });
 
+/** The bound user id. Anyone can call the action with any value, so check its shape. */
+export const userIdSchema = z.string().regex(/^[a-z0-9]{1,64}$/);
+
 /** The /organizer/users filters, from the URL. Anything unknown is ignored. */
 export const usersFilterSchema = z.object({
   q: z.string().trim().max(100).catch(""),

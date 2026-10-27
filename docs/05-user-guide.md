@@ -81,7 +81,16 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My profile** from the user menu (top right; on a phone, the menu button). Until your name and faculty are
+   saved, a notice at the top reminds you to add them.
+2. Fill in **Name** and **Faculty**. Your email and role are shown above the form; you can't change them here.
+3. To add a skill, type it and press Enter or **Add skill**. Remove one with the **×** on its tag.
+4. Write a short **Bio** if you like. The counter under it shows how many of the 500 characters you've used.
+5. Add up to 3 **Links**, each starting with `https://`. Use **Add link** for another row.
+6. Press **Save profile**. You see "Profile saved." The first time you save after creating your account, you're
+   taken to the events list. If something is missing or too long, the message appears under that field.
+7. To see someone else's profile, select their name in a team list or the ranking. Their profile is read-only. On
+   your own, **Edit my profile** brings you back to the form.
 
 ---
 
@@ -95,10 +104,19 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 **Good to know:**
 - Events appear in the list only while their registration is open.
 - You can register for each event once. If registration is closed, you can't register.
+- You need a name and faculty on your profile first. Until then the event page shows "Complete your profile before
+  registering." with a link to your profile.
+- Judges and organizers don't register. Organizers see "Manage event" on the event page instead.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **Events** in the top navigation. Each card shows the event's dates, the maximum team size and the start of
+   its description. Events you're already registered for have a "Registered" badge.
+2. Select an event to open its page. It shows the full description, the status badges and how many people have
+   registered.
+3. Select **Register**. The page now says "You're registered" and offers **Create or join a team**.
+4. Not logged in? Select **Log in to register**; after logging in you come back to the event.
+5. If registration has closed, the button reads "Registration closed" and can't be used.
 
 ### My events
 <!-- owner: Xurliman · card #5 · fill in your PR -->
@@ -108,7 +126,11 @@ once they're published.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open **My events** in the top navigation. It's also where you land after logging in.
+2. Each event shows its dates and status, your team (or "No team yet") and whether your team has submitted.
+3. Select **Go to my team** or **Create or join a team** to manage your team, or **Open event** for the event page.
+4. Once the organizer publishes results, select **Results published: see the ranking** to jump to the ranking.
+5. Events whose results are still to come are listed first, soonest first.
 
 ### Form a team
 <!-- owner: Xurliman · card #6 · fill in your PR -->
@@ -246,9 +268,24 @@ results.
 **What you can do:** see everyone registered for an event, every team with its members, and which teams have
 submitted.
 
+**Good to know:**
+- Only organizers can open this page.
+- People who haven't filled in their profile yet are shown by their email.
+- On a phone, each person and each team is shown as a card instead of a table row.
+
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event from **Events I run** and select **Participants** in the menu under its name.
+2. The **Participants** tab lists everyone registered, sorted by name: their email, faculty, team (or "No team") and
+   the day they registered. Select a name to open their profile.
+3. To find someone, type part of their name or email under **Search by name or email** and select **Search**.
+   **Clear search** shows everyone again.
+4. Select the **Teams** tab for every team: its members, how full it is ("2 of 4") and whether it has submitted.
+   A submitted team shows "Submitted" with the date, the project title and a **Repository** link that opens in a new
+   tab. Select **Show description** to read the project description.
+
+The number next to each tab is how many people registered and how many teams formed. Before anyone registers, the
+page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 ### Review and publish the ranking
 <!-- owner: Mehroj · card #16 · fill in your PR -->

@@ -363,7 +363,12 @@ page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Log in, or choose **Judging** in the navigation.
+2. Each event being judged shows its number of criteria and your progress, for example "1 of 2 teams scored".
+3. Under it, every team that submitted shows its project title and your status: **Not started**, **In progress**
+   (some criteria scored) or **Scored**.
+4. Choose **Score next team** to open the next team you haven't finished, or choose any team.
+5. Events whose results are out are listed under **Results published**, with a link to the ranking.
 
 ### Score a team
 <!-- owner: Ollayorbek · card #8 · fill in your PR -->
@@ -377,7 +382,15 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open a team from **Judging**. Read the project title and description, and choose **Open the repository** to see
+   the code in a new tab.
+2. Under **Your scores**, enter a whole number for each criterion. The range is shown next to each box, for example
+   "0–10".
+3. Choose **Save scores** to stay on the team ("Scores saved."), or **Save and go to next team** to move on. After
+   the last team you return to Judging with "You've scored every team in {event}."
+4. To change a score, open the team again, edit it and save. Clearing a box removes that score.
+5. If you see "Scoring starts when the organizer closes submissions." or "Results are published, so scores can't be
+   changed.", the form is read-only.
 
 ---
 

@@ -137,6 +137,16 @@ docker compose -f docker-compose.prod.yml up -d --build   # migrate runs first, 
 curl -fsS https://<domain>/api/health
 ```
 
+_TBD:_ automate these steps with a GitHub Actions workflow that SSHes into the VPS and runs them on every push to `main`.
+
+### Backups
+
+```bash
+docker compose -f docker-compose.prod.yml exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup-$(date +%F).sql
+```
+
+Take a backup before every deploy that includes a migration.
+
 ### Automatic deploys
 
 A systemd timer on the server runs [`deploy/autodeploy.sh`](../deploy/autodeploy.sh) every 2 minutes. When `origin/main`
@@ -155,14 +165,6 @@ hackhub-autodeploy --dry-run                 # what the next run would do
 tail -f /var/log/hackhub-autodeploy.log      # or: journalctl -u hackhub-autodeploy
 systemctl stop hackhub-autodeploy.timer      # pause (for example while deploying by hand); start to resume
 ```
-
-### Backups
-
-```bash
-docker compose -f docker-compose.prod.yml exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup-$(date +%F).sql
-```
-
-Take a backup before every deploy that includes a migration.
 
 ## Smoke test after a deploy
 

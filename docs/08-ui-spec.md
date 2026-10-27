@@ -1,6 +1,7 @@
 # 8. UI specification
 
-> **Status:** for design, 26 Oct 2026. It covers every screen in the Oct 28 release. The product rules marked
+> **Status:** for design, 26 Oct 2026. Every screen is built as of 28 Oct; the few places where the build differs
+> are marked "As built". It covers every screen in the Oct 28 release. The product rules marked
 > **Decision** come from the release plan and were confirmed on 26 Oct
 > ([Scope decisions](02-scope-decisions.md#product-rules)).
 
@@ -262,6 +263,8 @@ show under the field. Errors that aren't about one field show above the form.
 - **Already submitted, submissions open.** Form prefilled, button "Save changes", toast "Submission updated." Shows "Last updated {date, time}".
 - **Submissions closed (frame).** No form. If submitted: the submission read-only, with "Submissions are closed for this event." If not: "Submissions are closed for this event. Your team didn't submit a project, so it won't be ranked." (TC-67, TC-71)
 - **Submissions not open yet.** "Submissions haven't opened yet. The organizer will open them when building starts."
+  As built: the event has one `submissionsOpen` switch, so the page treats submissions as closed (not "not open yet") once any team
+  in the event has submitted, results are published, or the event's last day is over (`lib/domain/submission.ts`).
 - **Tests.** TC-64, TC-65, TC-66, TC-67, TC-69, TC-70, TC-71.
 
 ### Organizer (#44)
@@ -353,7 +356,7 @@ show under the field. Errors that aren't about one field show above the form.
 - **Data.** The same table as the published ranking: rank, team, members, total (0–100), plus a "Judges" column with how many judges scored each team, for the manual review. Teams without a submission
   aren't ranked; they're listed under the table as "Not ranked (no submission): {team names}" (**Decision 10**).
 - **Notes shown on the page.** "A criterion nobody scored counts as 0 for that team." and "Ties are broken by the highest-weight criterion, then the next."
-- **Actions.** "Publish results" (same rules and dialog as the overview). After publishing: the page says "Published on {date}." and links to the public event page.
+- **Actions.** "Publish results" (same rules and dialog as the overview). After publishing: the page says "Results were published." and links to the public event page. (As built: no date, because the schema stores no publish time; the overview does the same.)
 - **States.** **Not ready (frame):** before submissions close or before criteria exist: "The ranking appears once submissions are closed and criteria are set." **No scores yet:** the table with every total 0 and the line "No scores yet."
 - **Tests.** TC-05, TC-101, TC-102, TC-103, TC-105.
 

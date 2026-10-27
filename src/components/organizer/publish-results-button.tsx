@@ -32,6 +32,8 @@ type Props = {
   /** Disabled without a reason of its own (results published: the page says so). */
   disabled?: boolean;
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
+  /** "outline" where it isn't the view's one primary action (the overview's manual controls). */
+  variant?: "default" | "outline";
 };
 
 export function PublishResultsButton({
@@ -40,6 +42,7 @@ export function PublishResultsButton({
   disabledReason,
   disabled,
   action,
+  variant = "default",
 }: Props) {
   const id = useId();
   const [state, dispatch, pending] = useActionState(action, null);
@@ -60,6 +63,7 @@ export function PublishResultsButton({
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button
+            variant={variant}
             className="min-h-11 self-start"
             disabled={pending || disabled || Boolean(disabledReason)}
             aria-describedby={disabledReason ? `${id}-reason` : undefined}

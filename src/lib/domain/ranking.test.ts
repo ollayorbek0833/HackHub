@@ -76,7 +76,7 @@ describe("rankTeams", () => {
     expect(result.ranked.map((r) => r.rank)).toEqual([1, 1]);
   });
 
-  it("counts a criterion nobody scored as 0 (Decision 10)", () => {
+  it("counts a criterion nobody scored as 0 (Decision 10, TC-124)", () => {
     const result = rankTeams({
       criteria: [crit("idea", 50), crit("demo", 50)],
       teams: [team("a")],
@@ -211,7 +211,7 @@ describe("rankTeams", () => {
     ]);
   });
 
-  it("does not rank teams without a submission (Decision 10, TC-105)", () => {
+  it("does not rank teams without a submission (Decision 10, TC-105, TC-124)", () => {
     const result = rankTeams({
       criteria: [crit("idea", 100)],
       teams: [team("a"), team("ghost", false), team("b")],

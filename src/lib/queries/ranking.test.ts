@@ -100,7 +100,7 @@ describe("getEventRanking", () => {
     );
   });
 
-  it("ranks submitted teams and lists the rest as unranked", async () => {
+  it("ranks submitted teams and lists the rest as unranked (TC-124)", async () => {
     const ranking = await getEventRanking("event-1");
 
     expect(

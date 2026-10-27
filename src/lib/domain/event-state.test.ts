@@ -16,7 +16,7 @@ const event = (
   resultsPublished: boolean,
 ) => ({ registrationOpen, submissionsOpen, resultsPublished });
 
-describe("canRegister", () => {
+describe("canRegister (TC-35)", () => {
   it("follows the registration switch", () => {
     expect(canRegister(event(true, false, false))).toBe(true);
     expect(canRegister(event(false, false, false))).toBe(false);
@@ -28,7 +28,7 @@ describe("canRegister", () => {
   });
 });
 
-describe("canSubmit", () => {
+describe("canSubmit (TC-35, TC-67)", () => {
   it("is allowed while submissions are open", () => {
     expect(canSubmit(event(false, true, false))).toBe(true);
   });

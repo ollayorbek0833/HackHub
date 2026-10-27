@@ -132,6 +132,7 @@ function RunStep({
             <AlertDialogDescription asChild>
               <div className="flex flex-col gap-2">
                 <p>{confirm.description}</p>
+                {step.note && <p className="text-foreground">{step.note}</p>}
                 {step.kind === "publishResults" && rankingHref && (
                   <p>
                     HackHub doesn&apos;t track whether every team has been

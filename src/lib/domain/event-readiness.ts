@@ -1,3 +1,4 @@
+import { eventPhase, type EventPhase } from "@/lib/domain/event-phase";
 import type { EventState } from "@/lib/domain/event-state";
 import {
   criteriaAreSet,
@@ -23,32 +24,22 @@ export type EventProgress = EventState & {
   criteria: { weightPercent: number }[];
 };
 
-export type Phase =
-  "setup" | "registration" | "building" | "judging" | "published";
-
-export const PHASE_LABEL: Record<Phase, string> = {
-  setup: "Setting up",
-  registration: "Registration",
-  building: "Building",
-  judging: "Judging",
-  published: "Results published",
-};
-
-export const PHASE_HELP: Record<Phase, string> = {
-  setup: "Participants can't see the event yet.",
+/**
+ * The phase is the one the event chip and the participant pages show
+ * (`eventPhase` in event-phase.ts), so the organizer sees the same word
+ * everywhere. This adds a line on what it means for the organizer.
+ */
+export const PHASE_HELP: Record<EventPhase, string> = {
+  upcoming: "Participants can't register yet.",
   registration: "Participants can register and form teams.",
   building: "Teams are building and can submit.",
   judging: "Submissions are closed. Judges score the teams.",
-  published: "The ranking is public. Nothing can change any more.",
+  results: "The ranking is public. Nothing can change any more.",
 };
 
-/** Where the event stands, from its switches and what has happened so far. */
-export function eventPhase(e: EventProgress): Phase {
-  if (e.resultsPublished) return "published";
-  if (e.submissionsOpen) return "building";
-  if (e.submissions > 0 || e.scoreCount > 0) return "judging";
-  if (e.registrationOpen || e.registrations > 0) return "registration";
-  return "setup";
+/** The shared phase, from the switches and whether anyone has submitted. */
+export function progressPhase(e: EventProgress): EventPhase {
+  return eventPhase({ ...e, hasSubmissions: e.submissions > 0 });
 }
 
 export type StepKind =
@@ -77,8 +68,13 @@ export type NextStep = {
 
 /** The one thing the organizer should do next. */
 export function nextStep(e: EventProgress, eventName: string): NextStep {
-  switch (eventPhase(e)) {
-    case "setup":
+  const phase = progressPhase(e);
+  // Not open yet, but people registered: the organizer closed registration
+  // again, so the next step is submissions, not registration.
+  const step =
+    phase === "upcoming" && e.registrations > 0 ? "registration" : phase;
+  switch (step) {
+    case "upcoming":
       return {
         kind: "openRegistration",
         title: "Next: open registration",
@@ -155,7 +151,7 @@ export function nextStep(e: EventProgress, eventName: string): NextStep {
             ? `Only ${e.scoredTeams} of ${e.submissions} submitted teams ${e.scoredTeams === 1 ? "has" : "have"} been scored on every criterion. Check with your judges first.`
             : undefined,
       };
-    case "published":
+    case "results":
       return {
         kind: "viewResults",
         title: "Results are published",

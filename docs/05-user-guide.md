@@ -310,8 +310,8 @@ results.
 
 **Steps:**
 
-1. Open the event from **Events I run**. The **Overview** shows the event's phase (Setting up, Registration,
-   Building, Judging or Results published), how many people registered, how many teams formed, how many submitted and
+1. Open the event from **Events I run**. The **Overview** shows the event's phase (Not open yet, Registration open,
+   Submissions open, Judging or Results published), how many people registered, how many teams formed, how many submitted and
    how many submitted teams a judge has fully scored.
 2. **Readiness** lists what has to be true before the results can go out: criteria that total 100%, participants,
    teams, submissions, every submitted team scored, results published. Each open item links to the page that fixes it.

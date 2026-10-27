@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  eventPhase,
   nextStep,
+  progressPhase,
   readinessChecks,
   type EventProgress,
 } from "./event-readiness";
@@ -24,7 +24,7 @@ const at = (patch: Partial<EventProgress>) => ({ ...base, ...patch });
 
 describe("eventPhase and nextStep", () => {
   it("a new event is being set up; next, open registration", () => {
-    expect(eventPhase(base)).toBe("setup");
+    expect(progressPhase(base)).toBe("upcoming");
     expect(nextStep(base, "Demo")).toMatchObject({
       kind: "openRegistration",
       title: "Next: open registration",
@@ -34,20 +34,22 @@ describe("eventPhase and nextStep", () => {
 
   it("with registration open, next is opening submissions", () => {
     const e = at({ registrationOpen: true, registrations: 5, teams: 2 });
-    expect(eventPhase(e)).toBe("registration");
+    expect(progressPhase(e)).toBe("registration");
     expect(nextStep(e, "Demo")).toMatchObject({
       kind: "openSubmissions",
       blocker: null,
     });
   });
 
-  it("registration closed again, with people registered, is still registration", () => {
-    expect(eventPhase(at({ registrations: 3 }))).toBe("registration");
+  it("registration closed again, with people registered: not open, next is submissions", () => {
+    const e = at({ registrations: 3 });
+    expect(progressPhase(e)).toBe("upcoming");
+    expect(nextStep(e, "Demo").kind).toBe("openSubmissions");
   });
 
   it("with submissions open, next is closing them, with a confirm dialog", () => {
     const e = at({ registrationOpen: true, submissionsOpen: true });
-    expect(eventPhase(e)).toBe("building");
+    expect(progressPhase(e)).toBe("building");
     const step = nextStep(e, "Demo");
     expect(step.kind).toBe("closeSubmissions");
     expect(step.confirm?.title).toBe("Close submissions?");
@@ -55,7 +57,7 @@ describe("eventPhase and nextStep", () => {
 
   it("after submissions close, judging; publishing needs criteria first", () => {
     const e = at({ submissions: 2 });
-    expect(eventPhase(e)).toBe("judging");
+    expect(progressPhase(e)).toBe("judging");
     expect(nextStep(e, "Demo").kind).toBe("setCriteria");
     const ready = at({ submissions: 2, criteria: SET, scoreCount: 6 });
     expect(nextStep(ready, "Demo")).toMatchObject({
@@ -77,7 +79,7 @@ describe("eventPhase and nextStep", () => {
 
   it("once published, there's nothing to switch: view the ranking", () => {
     const e = at({ resultsPublished: true, submissions: 2, criteria: SET });
-    expect(eventPhase(e)).toBe("published");
+    expect(progressPhase(e)).toBe("results");
     const step = nextStep(e, "Demo");
     expect(step.kind).toBe("viewResults");
     expect(step.confirm).toBeUndefined();

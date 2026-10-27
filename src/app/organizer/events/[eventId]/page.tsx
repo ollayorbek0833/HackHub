@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CheckIcon, ChevronDownIcon, CircleIcon } from "lucide-react";
 
+import { PhaseLabel } from "@/components/events/phase-dot";
 import { EventSwitch } from "@/components/organizer/event-switch";
 import { NextStepCard } from "@/components/organizer/next-step-card";
 import { PublishResultsButton } from "@/components/organizer/publish-results-button";
@@ -9,10 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireEvent, requireRole } from "@/lib/auth/dal";
 import {
-  eventPhase,
   nextStep,
   PHASE_HELP,
-  PHASE_LABEL,
+  progressPhase,
   readinessChecks,
   type EventProgress,
 } from "@/lib/domain/event-readiness";
@@ -92,7 +92,7 @@ async function CommandCentre({
     scoreCount,
     criteria,
   };
-  const phase = eventPhase(progress);
+  const phase = progressPhase(progress);
   const step = nextStep(progress, event.name);
   const checks = readinessChecks(progress);
   const published = event.resultsPublished;
@@ -129,7 +129,7 @@ async function CommandCentre({
     <div className="flex flex-col gap-6">
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-sm text-muted-foreground">Phase</span>
-        <span className="text-lg font-semibold">{PHASE_LABEL[phase]}</span>
+        <PhaseLabel phase={phase} className="text-lg font-semibold" />
         <span className="text-sm text-muted-foreground">
           {PHASE_HELP[phase]}
         </span>

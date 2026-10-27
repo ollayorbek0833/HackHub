@@ -149,7 +149,7 @@ The `migrate` service runs `prisma migrate deploy` and the seed (the first organ
 there's no separate migration step. The server hosts other apps: don't stop or change their containers or nginx
 sites.
 
-_TBD:_ automate these steps with a GitHub Actions workflow that SSHes into the VPS and runs them on every push to `main`.
+Since 27 Oct these steps run automatically when `main` moves: see [Automatic deploys](#automatic-deploys).
 
 ### Backups
 

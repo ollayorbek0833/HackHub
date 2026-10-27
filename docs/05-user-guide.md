@@ -25,7 +25,11 @@ HackHub works in phone and desktop browsers. All times are shown in Tashkent tim
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Choose **Register** at the top of any page (on a phone, open the menu first), or go to `/register`.
+2. Enter your email, a password of at least 8 characters, and the same password again in **Confirm password**.
+3. Choose **Create account**. You land on **My profile** with the message "Account created. Add your name and
+   faculty to finish your profile."
+4. If you see "An account with this email already exists", you already have an account: choose **Log in instead**.
 
 ### Log in and log out
 <!-- owner: Ollayorbek · card #3 · fill in your PR -->
@@ -36,10 +40,16 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 - If the email or password is wrong, HackHub says so without telling you which one.
 - After logging in you go back to the page you were on, or to your home page: My events for participants, Judging
   for judges, Events I run for organizers.
+- Your email isn't case-sensitive: `Ana@Example.com` and `ana@example.com` are the same account.
+- Opening a page that needs an account while logged out takes you to the login page first.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Choose **Log in** at the top of any page, or go to `/login`.
+2. Enter your email and password and choose **Log in**.
+3. If you see "Email or password is incorrect.", check both and try again.
+4. To log out, open the user menu (your name or email, top right; on a phone, the menu button) and choose
+   **Log out**. You return to the home page with the message "You're logged out."
 
 ### Find your way around
 <!-- owner: Xurliman · card #46 · fill in your PR -->

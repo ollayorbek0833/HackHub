@@ -16,3 +16,31 @@ export const passwordSchema = z
   .string({ error: "Enter a password." })
   .min(1, { error: "Enter a password.", abort: true })
   .min(8, "Use at least 8 characters.");
+
+/** The /register form (docs/08 > /register). */
+export const registerSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string({ error: "The passwords don't match." }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: "The passwords don't match.",
+    path: ["confirmPassword"],
+  });
+
+/**
+ * The /login form (docs/08 > /login). Both fields are only checked for being
+ * there: a wrong email or password gets one message from the action, so the
+ * form never hints which one was wrong (TC-51).
+ */
+export const loginSchema = z.object({
+  email: z
+    .string({ error: "Enter your email." })
+    .trim()
+    .toLowerCase()
+    .min(1, "Enter your email."),
+  password: z
+    .string({ error: "Enter your password." })
+    .min(1, "Enter your password."),
+});

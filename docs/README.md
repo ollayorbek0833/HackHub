@@ -13,7 +13,7 @@ It is a semester deliverable, together with the deployed system.
 | 3 | [Architecture](03-architecture.md) | Components, data model, permission matrix, scoring and assignment logic | Complete (stack: Next.js, Prisma, PostgreSQL) |
 | 4 | [Setup and deployment](04-setup-and-deployment.md) | Local setup, demo data, environments, deploy steps | Local setup checked 27 Oct. Production deploy in progress (#28) |
 | 5 | [User guide](05-user-guide.md) | How participants, judges and organizers use the platform | Complete for the Oct 28 release; reviewed as one guide on 28 Oct |
-| 6 | [Test report](06-test-report.md) | Test approach, test cases from each card's tasks, results | Template. Results are added as features are tested |
+| 6 | [Test report](06-test-report.md) | Test approach, test cases from each card's tasks, results | Release results recorded 27 Oct (90 of 95 pass, none failing). Production run and sign-off on 28 Oct |
 | 7 | [System design](07-system-design.md) | Code layout, request flow, Prisma schema v1, frontend patterns, testing and deployment design | Decisions confirmed 26 Oct; matched to the build on 28 Oct |
 | 8 | [UI specification](08-ui-spec.md) | UI specification for the designer: screens, contents, states | Every screen built; differences marked "As built" |
 

@@ -1,9 +1,9 @@
 # 8. UI specification
 
-> **Status:** for design, 26 Oct 2026. Every screen is built as of 28 Oct; the few places where the build differs
-> are marked "As built". It covers every screen in the Oct 28 release. The product rules marked
+> **Status:** for design, 26 Oct 2026. It covers every screen in the Oct 28 release. The product rules marked
 > **Decision** come from the release plan and were confirmed on 26 Oct
-> ([Scope decisions](02-scope-decisions.md#product-rules)).
+> ([Scope decisions](02-scope-decisions.md#product-rules)). Every screen is built as of 28 Oct; the few places where
+> the build differs are marked "As built".
 
 ## How to use this spec
 

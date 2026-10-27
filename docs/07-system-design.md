@@ -126,7 +126,7 @@ Use an interactive `prisma.$transaction(async (tx) => …)` whenever a rule read
 | **Save scores** (#8) | `FOR SHARE` on the event row, which serializes with Save criteria and Publish results (both `FOR UPDATE`). Event in judging (Decision 2), team has a submission, criteria belong to the event. Upsert each filled score; delete this judge's score only for a criterion submitted blank. Input that isn't a whole number in range is refused, never treated as blank |
 | **Change role** (#13) | `FOR UPDATE` on the target user row. Target isn't on any team (Decision 11) and isn't an organizer. Update the role |
 | **Switches and publish** (#12) | `FOR UPDATE` on the event row, then the rule from `lib/domain/event-switches.ts` |
-| **Edit event** (#9) | New `maxTeamSize` isn't below the largest current team |
+| **Edit event** (#9) | `SELECT … FROM teams WHERE event_id = $1 FOR UPDATE`, so nobody joins while the size is checked. New `maxTeamSize` isn't below the largest current team |
 
 Publishing results (#12) is a single update of `resultsPublished` under the event row lock; the scoring rules read that flag.
 

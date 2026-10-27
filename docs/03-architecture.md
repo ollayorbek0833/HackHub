@@ -1,7 +1,8 @@
 # 3. Architecture
 
 > **Status:** logical design. The technology stack was chosen on 2026-10-19 (see [Technology stack](#technology-stack)).
-> The data model and rules don't depend on the stack.
+> The data model and rules don't depend on the stack. Checked against the Oct 28 release on 28 Oct: where the release
+> decisions changed something, this document says so. How it's built is in [System design](07-system-design.md).
 
 ## Overview
 
@@ -16,7 +17,7 @@
 - **Web client.** Next.js pages styled with Tailwind and shadcn/ui. A responsive interface with three role-specific areas: participant, judge and organizer. It only
   shows the actions the current role is allowed to use.
 - **Backend API.** Next.js route handlers and server actions in the same app. Handles authentication, checks permissions on **every** endpoint, and enforces all product rules
-  (event state, one team per event, weight totals, scoring ranges). It also calculates the ranking and runs judge auto-assignment.
+  (event state, one team per event, weight totals, scoring ranges). It also calculates the ranking. Judge auto-assignment is after the release (Decision 1).
 - **Database.** PostgreSQL, accessed through Prisma. A relational store for users, events, teams, submissions, criteria and scores. Use a relational
   database, because the data is highly relational and the rules need constraints (unique memberships, one submission per team).
 
@@ -64,8 +65,8 @@ Judge ──< Comment >── Team
 | **TeamMember** | team_id, user_id, team_role (optional) | A user is on at most one team per event. team_role is the Could have P7 |
 | **Submission** | team_id, title, description, repo_url | One per team. Only allowed while submissions are open. repo_url must be a valid URL |
 | **Criterion** | event_id, name, weight_percent, max_score | The weights for an event total 100. Locked once scoring starts |
-| **JudgeAssignment** | judge_id, team_id | Unique per (judge, team) |
-| **Score** | judge_id, team_id, criterion_id, value | 0 ≤ value ≤ max_score. Only for assigned teams. Editable until results are published |
+| **JudgeAssignment** | judge_id, team_id | Unique per (judge, team). In the schema for auto-assignment, unused in the Oct 28 release |
+| **Score** | judge_id, team_id, criterion_id, value | 0 ≤ value ≤ max_score. Any judge, for any submitted team of an event in judging (Decision 1). Editable until results are published |
 | **Comment** | judge_id, team_id, text | Judges only. Visible to the team and organizers |
 
 ## Permission matrix
@@ -92,16 +93,22 @@ Judge ──< Comment >── Team
 
 Every cell is enforced by the backend. The client hiding a button is only a convenience.
 
+For the Oct 28 release, "assigned teams" means every submitted team of an event in judging, because every judge
+judges every team (Decision 1). Comments, auto-assignment, and the schedule and brief are after the release. The row
+names stay as they are, because `src/lib/auth/permissions.test.ts` reads this table row by row (TC-73).
+
 ## Event lifecycle
 
 ```
-Draft ──▶ Registration open ──▶ Registration closed ──▶ Submissions open ──▶ Submissions closed
+New event ──▶ Registration open ──▶ Registration closed ──▶ Submissions open ──▶ Submissions closed
                                                                                    │
                      Results published ◀── Manual score review ◀── Judging ◀──────┘
 ```
 
 Registration and submissions are independent switches (requirement O4). The diagram shows the usual order,
-but the organizer can open or close either one at any time.
+but the organizer can open or close either one at any time, with two limits: submissions can't reopen once any score
+exists, and nothing changes after results are published (Decisions 2, 3). There is no Draft state: a new event has
+registration closed and isn't listed until registration opens (Decision 5).
 
 ## Ranking calculation
 
@@ -114,10 +121,16 @@ For each team *t*:
 4. **Tie-break.** For teams with equal totals, compare normalized scores on the criterion with the highest weight, then the next highest, and so on.
    If teams are still tied after all criteria, they share the rank.
 
+Teams without a submission aren't ranked, and a criterion nobody scored counts as 0 for that team (Decision 10).
+Totals are compared rounded to 6 decimals and shown with one.
+
 Averaging and normalizing (step 1) keep the ranking fair when teams have different numbers of judges, or when
 criteria have different score ranges.
 
 ## Judge auto-assignment
+
+> **After the release** (card #19). For the Oct 28 release every judge scores every team (Decision 1). The design
+> below is kept for that card.
 
 Goal: each judge gets a **fair** set of teams. That means a balanced count, the same team never assigned twice to one
 judge, and every team scored by the same number of judges.

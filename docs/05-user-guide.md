@@ -4,10 +4,8 @@ This guide describes how each role uses HackHub, following the confirmed product
 [Scope decisions](02-scope-decisions.md#product-rules) and the screens in the [UI specification](08-ui-spec.md).
 HackHub works in phone and desktop browsers. All times are shown in Tashkent time (GMT+5).
 
-> **How this guide is filled in.** Each section has an owner comment (`<!-- owner: … -->`). The person who builds a
-> screen replaces that section's placeholder with real steps and screenshots **in the same PR as the screen**, and
-> touches only their own sections. Unfinished parts are marked `TODO(user-guide)`; the final docs review searches for
-> that token, and none may be left at release.
+> **How this guide was written.** Each section was written by the person who built its screens (the owner comment
+> above each one), and reviewed as one guide on 28 Oct.
 
 ---
 
@@ -25,11 +23,11 @@ HackHub works in phone and desktop browsers. All times are shown in Tashkent tim
 
 **Steps:**
 
-1. Choose **Register** at the top of any page (on a phone, open the menu first), or go to `/register`.
+1. Select **Register** at the top of any page (on a phone, open the menu first), or go to `/register`.
 2. Enter your email, a password of at least 8 characters, and the same password again in **Confirm password**.
-3. Choose **Create account**. You land on **My profile** with the message "Account created. Add your name and
+3. Select **Create account**. You land on **My profile** with the message "Account created. Add your name and
    faculty to finish your profile."
-4. If you see "An account with this email already exists", you already have an account: choose **Log in instead**.
+4. If you see "An account with this email already exists", you already have an account: select **Log in instead**.
 
 ### Log in and log out
 <!-- owner: Ollayorbek · card #3 · fill in your PR -->
@@ -45,10 +43,10 @@ HackHub works in phone and desktop browsers. All times are shown in Tashkent tim
 
 **Steps:**
 
-1. Choose **Log in** at the top of any page, or go to `/login`.
-2. Enter your email and password and choose **Log in**.
+1. Select **Log in** at the top of any page, or go to `/login`.
+2. Enter your email and password and select **Log in**.
 3. If you see "Email or password is incorrect.", check both and try again.
-4. To log out, open the user menu (your name or email, top right; on a phone, the menu button) and choose
+4. To log out, open the user menu (your name or email, top right; on a phone, the menu button) and select
    **Log out**. You return to the home page with the message "You're logged out."
 
 ### Find your way around
@@ -66,7 +64,13 @@ user menu for your profile and logging out.
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. The bar at the top of every page has the HackHub logo (it takes you home) and the links for your role. The link
+   for the section you're in is underlined.
+2. Your name, or your email until your profile has a name, is on the right. Open it for **My profile** and **Log out**.
+3. On a phone, select the menu button at the top right. The same links, My profile and Log out are in the panel that
+   opens.
+4. Signed out, you see **Events**, **Log in** and **Register**. Opening a page that needs an account takes you to the login page and
+   back to that page afterwards.
 
 ### Your profile
 <!-- owner: Mehroj · card #4 · fill in your PR -->
@@ -84,10 +88,10 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 1. Open **My profile** from the user menu (top right; on a phone, the menu button). Until your name and faculty are
    saved, a notice at the top reminds you to add them.
 2. Fill in **Name** and **Faculty**. Your email and role are shown above the form; you can't change them here.
-3. To add a skill, type it and press Enter or **Add skill**. Remove one with the **×** on its tag.
+3. To add a skill, type it and press Enter or select **Add skill**. Remove one with the **×** on its tag.
 4. Write a short **Bio** if you like. The counter under it shows how many of the 500 characters you've used.
 5. Add up to 3 **Links**, each starting with `https://`. Use **Add link** for another row.
-6. Press **Save profile**. You see "Profile saved." The first time you save after creating your account, you're
+6. Select **Save profile**. You see "Profile saved." The first time you save after creating your account, you're
    taken to the events list. If something is missing or too long, the message appears under that field.
 7. To see someone else's profile, select their name in a team list or the ranking. Their profile is read-only. On
    your own, **Edit my profile** brings you back to the form.
@@ -178,7 +182,7 @@ are open, and update it until they close.
    haven't opened yet.")
 2. Fill in the **Project title**, a **Description** (the counter shows how many of the 2000 characters you've used)
    and the **Repository link**, for example `https://github.com/team/project`.
-3. Press **Submit project**. You're taken back to your team page with "Project submitted."
+3. Select **Submit project**. You're taken back to your team page with "Project submitted."
 4. To change something while submissions are open, any team member opens the same page again: the form is filled
    in, and **Save changes** updates it ("Submission updated."). The page shows when it was last updated.
 5. Once the organizer closes submissions, the page shows your submission read-only. If your team didn't submit, it
@@ -244,12 +248,12 @@ The menu under an event's name has the event's pages: Overview, Edit, Criteria, 
 
 **Steps:**
 
-1. Open the event from **Events I run** and choose **Criteria**.
+1. Open the event from **Events I run** and select **Criteria**.
 2. Fill in the first row: a name (for example "Innovation"), its weight in percent and its max score.
-3. Choose **Add criterion** for each further criterion, and the bin icon to remove one.
+3. Select **Add criterion** for each further criterion, and the bin icon to remove one.
 4. Watch the total at the bottom of the page. It tells you how much is left to assign ("Total 90%: 10% left to
    assign") or how much you're over, and says "exactly 100%" when you're ready.
-5. Choose **Save criteria**. You see "Criteria saved." If something is wrong, the message next to the row or above
+5. Select **Save criteria**. You see "Criteria saved." If something is wrong, the message next to the row or above
    the list says what to fix.
 6. Once a judge has scored, the page shows the criteria read-only with "Criteria are locked because judges have
    started scoring."
@@ -266,11 +270,11 @@ The menu under an event's name has the event's pages: Overview, Edit, Criteria, 
 
 **Steps:**
 
-1. Choose **Users** in the navigation.
+1. Select **Users** in the navigation.
 2. Find the person: type part of their name or email in **Search by name or email**, pick a **Role** if you like,
-   and choose **Search**.
-3. Choose **Make judge** on a participant, or **Make participant** on a judge. You see "{name} is now a judge." (or
-   "a participant") and the row updates. To undo, choose the other button.
+   and select **Search**.
+3. Select **Make judge** on a participant, or **Make participant** on a judge. You see "{name} is now a judge." (or
+   "a participant") and the row updates. To undo, select the other button.
 4. If the button is greyed out, the line under it says why, for example "Ana is on a team in Demo Hack, so they
    can't become a judge."
 
@@ -363,11 +367,11 @@ page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 **Steps:**
 
-1. Log in, or choose **Judging** in the navigation.
+1. Log in, or select **Judging** in the navigation.
 2. Each event being judged shows its number of criteria and your progress, for example "1 of 2 teams scored".
 3. Under it, every team that submitted shows its project title and your status: **Not started**, **In progress**
    (some criteria scored) or **Scored**.
-4. Choose **Score next team** to open the next team you haven't finished, or choose any team.
+4. Select **Score next team** to open the next team you haven't finished, or select any team.
 5. Events whose results are out are listed under **Results published**, with a link to the ranking.
 
 ### Score a team
@@ -382,11 +386,11 @@ page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 **Steps:**
 
-1. Open a team from **Judging**. Read the project title and description, and choose **Open the repository** to see
+1. Open a team from **Judging**. Read the project title and description, and select **Open the repository** to see
    the code in a new tab.
 2. Under **Your scores**, enter a whole number for each criterion. The range is shown next to each box, for example
    "0–10".
-3. Choose **Save scores** to stay on the team ("Scores saved."), or **Save and go to next team** to move on. After
+3. Select **Save scores** to stay on the team ("Scores saved."), or **Save and go to next team** to move on. After
    the last team you return to Judging with "You've scored every team in {event}."
 4. To change a score, open the team again, edit it and save. Clearing a box removes that score.
 5. If you see "Scoring starts when the organizer closes submissions." or "Results are published, so scores can't be
@@ -404,7 +408,14 @@ page says "Nobody has registered yet."; before any team forms, "No teams yet."
 
 **Steps:**
 
-TODO(user-guide) _To be completed when the deploy is in place._
+1. HackHub runs at https://hackhub.mekhroj.uz. The server deploys `main` on its own within a few minutes of a merge,
+   and rolls back if the new version doesn't pass its health check. To check it: `curl -fsS
+   https://hackhub.mekhroj.uz/api/health` returns `{"status":"ok"}`.
+2. The first organizer account comes from `SEED_ORGANIZER_EMAIL` and `SEED_ORGANIZER_PASSWORD` in the server's `.env`.
+   It's created on the first deploy, and later deploys never change its password. Log in with it, then use **Users** to
+   make judges. Every other account registers itself.
+3. Setting up a new server, deploying by hand, backups and pausing the automatic deploys are in
+   [Setup and deployment](04-setup-and-deployment.md#production-deployment-vps--docker).
 
 ---
 

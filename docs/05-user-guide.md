@@ -176,7 +176,15 @@ TODO(user-guide) _To be completed with screenshots when the screen is built._
 
 **Steps:**
 
-TODO(user-guide) _To be completed with screenshots when the screen is built._
+1. Open the event from **Events I run** and choose **Criteria**.
+2. Fill in the first row: a name (for example "Innovation"), its weight in percent and its max score.
+3. Choose **Add criterion** for each further criterion, and the bin icon to remove one.
+4. Watch the total at the bottom of the page. It tells you how much is left to assign ("Total 90%: 10% left to
+   assign") or how much you're over, and says "exactly 100%" when you're ready.
+5. Choose **Save criteria**. You see "Criteria saved." If something is wrong, the message next to the row or above
+   the list says what to fix.
+6. Once a judge has scored, the page shows the criteria read-only with "Criteria are locked because judges have
+   started scoring."
 
 ### Make users judges
 <!-- owner: Ollayorbek · card #13 · fill in your PR -->

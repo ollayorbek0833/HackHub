@@ -1,6 +1,6 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { signIn } from "@/auth";
@@ -32,9 +32,10 @@ export async function login(
   try {
     await signIn("credentials", { email, password, redirect: false });
   } catch (e) {
-    // Only a failed sign-in becomes the form error. Anything else (database
-    // down) goes to error.tsx.
-    if (e instanceof AuthError) {
+    // Only a wrong email or password becomes the form error. Any other
+    // AuthError (authorize() threw, e.g. the database is down) and anything
+    // else go to error.tsx.
+    if (isWrongCredentials(e)) {
       return { ok: false, formError: WRONG_CREDENTIALS, values };
     }
     throw e;
@@ -47,4 +48,12 @@ export async function login(
   });
   const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"));
   redirect(callbackUrl ?? (user ? ROLE_HOME[user.role] : "/"));
+}
+
+/** A failed credentials check, as opposed to an error while checking. */
+function isWrongCredentials(e: unknown) {
+  return (
+    e instanceof CredentialsSignin ||
+    (e instanceof AuthError && e.type === "CredentialsSignin")
+  );
 }

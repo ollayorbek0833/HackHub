@@ -41,7 +41,7 @@ type Props = {
   lastSaved: string | null;
 };
 
-/** Above this max a row of buttons gets too long; the row takes a typed number instead. */
+/** Above this max the buttons get too many; the criterion takes a typed number instead. */
 const MAX_BUTTONS = 20;
 
 const LEAVE_WARNING = "Leave without saving your scores?";
@@ -307,7 +307,11 @@ function CriterionScore({
             aria-describedby={invalid ? errorId : undefined}
             aria-invalid={invalid || undefined}
             onKeyDown={onKeyDown}
-            className="grid flex-1 grid-cols-6 gap-1.5 sm:flex sm:flex-none sm:flex-wrap"
+            // Phones: a 6-column grid. From sm: a wrapping row that may shrink
+            // to its column (min-w-0), capped at 11 buttons a line (11 × 2.75rem
+            // + 10 gaps × 0.375rem = 34rem): 0–10 stays one line, and 0–20
+            // wraps as 0–10 / 11–20 with the clear button right after.
+            className="grid flex-1 grid-cols-6 gap-1.5 sm:flex sm:max-w-[34rem] sm:min-w-0 sm:flex-initial sm:flex-wrap"
           >
             {scores.map((score) => {
               const checked = numeric === score;

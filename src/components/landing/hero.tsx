@@ -23,7 +23,12 @@ export function Hero() {
           id="hero-heading"
           className="max-w-xl text-[clamp(2.375rem,1.7rem+2.9vw,3.75rem)] leading-[1.02] font-bold tracking-[-0.03em] text-balance"
         >
-          Run your whole hackathon in one place.
+          {/* From lg the column fits three lines at this size; break them on
+              purpose, so "hackathon" never sits alone. Below lg the line
+              wraps and balances on its own. */}
+          <span className="lg:block">Run your</span>{" "}
+          <span className="lg:block">whole hackathon</span>{" "}
+          <span className="lg:block">in one place.</span>
         </h1>
         <p className="mt-5 max-w-lg text-lg text-pretty text-muted-foreground">
           Registration, teams, project submissions, judging and a ranking
@@ -54,7 +59,8 @@ export function Hero() {
         </p>
       </div>
 
-      <ProductCollage className="mx-auto w-full max-w-xl lg:max-w-none" />
+      {/* Below lg it sits under the copy, on the copy's left edge. */}
+      <ProductCollage className="w-full max-w-xl lg:max-w-none" />
     </section>
   );
 }

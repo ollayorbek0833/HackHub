@@ -132,7 +132,34 @@ test("either spelling of the email logs in, and log out works (TC-48)", async ({
   await other.getByRole("menuitem", { name: "Log out" }).click();
   await expect(other.getByText("You're logged out.")).toBeVisible();
   await expect(other).toHaveURL(/\/$/);
+  // The session is really gone, not only hidden: the cookie isn't there and a
+  // signed-in page sends the visitor to log in.
+  const cookies = await other.context().cookies();
+  expect(cookies.filter((c) => c.name.includes("session-token"))).toEqual([]);
+  await other.goto("/my-events");
+  await expect(other).toHaveURL(/\/login\?callbackUrl=%2Fmy-events$/);
   await other.close();
+});
+
+test("a signed-in request doesn't re-issue the session cookie, so one in flight can't undo log out", async ({
+  page,
+}) => {
+  await registerAs(page, uniqueEmail());
+  await expect(page).toHaveURL(/\/profile$/);
+
+  // Prefetches leave while signed in and can land after log out. If the proxy
+  // set the session cookie on them, they would sign the user back in.
+  for (const path of ["/my-events", "/", "/events"]) {
+    const response = await page.request.get(path, { maxRedirects: 0 });
+    const setCookies = response
+      .headersArray()
+      .filter((h) => h.name.toLowerCase() === "set-cookie")
+      .map((h) => h.value);
+    expect(
+      setCookies.filter((c) => c.includes("session-token")),
+      path,
+    ).toEqual([]);
+  }
 });
 
 test("a wrong password shows one message and creates no session (TC-51)", async ({

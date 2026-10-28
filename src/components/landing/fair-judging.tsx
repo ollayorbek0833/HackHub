@@ -48,14 +48,12 @@ export const FAIR_JUDGING_SAMPLE = {
   judges: JUDGES,
   scores: TEAMS.flatMap((team) =>
     CRITERIA.flatMap((criterion) =>
-      JUDGES.map(
-        (judgeId, j): RankScore => ({
-          teamId: team.id,
-          criterionId: criterion.id,
-          judgeId,
-          value: SCORES[team.id][criterion.id][j],
-        }),
-      ),
+      JUDGES.map((judgeId, j): RankScore => ({
+        teamId: team.id,
+        criterionId: criterion.id,
+        judgeId,
+        value: SCORES[team.id][criterion.id][j],
+      })),
     ),
   ),
 };
@@ -126,10 +124,16 @@ const POINTS = [
 ];
 
 const NUM = "font-mono tabular-nums";
+// The score table has to fit a 292 px card at 360 px, so phones get tighter
+// gutters and the short "J1"/"J2" headers; only the wide single-card layout
+// (sm to lg) has room for "Judge 1".
+/** The table's outer gutters, matching the card header from sm up. */
+const FIRST = "pl-3 sm:pl-4";
+const LAST = "pr-3 sm:pr-4";
 /** A number column: right-aligned, with room between neighbouring figures. */
-const CELL = "py-2 pl-3 text-right whitespace-nowrap";
+const CELL = "py-2 pl-2 text-right whitespace-nowrap sm:pl-3";
 /** A judge's column: centred under its header, so it never crowds "Avg". */
-const JUDGE_CELL = "py-2 pl-3 text-center whitespace-nowrap";
+const JUDGE_CELL = "py-2 pl-2 text-center whitespace-nowrap sm:pl-3";
 
 function TeamCard({ entry }: { entry: FairJudgingTeam }) {
   const leader = entry.rank === 1;
@@ -177,15 +181,15 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
       >
         <thead className="text-muted-foreground">
           <tr>
-            <th scope="col" className="py-2 pl-4 font-medium">
+            <th scope="col" className={cn("py-2 font-medium", FIRST)}>
               Criterion
             </th>
             {JUDGES.map((_, j) => (
               <th key={j} scope="col" className={cn(JUDGE_CELL, "font-medium")}>
-                {/* "J1" in the narrow three-up cards, "Judge 1" elsewhere. */}
+                {/* "J1" on phones and in the three-up cards, "Judge 1" between. */}
                 <span aria-hidden>
-                  <span className="lg:hidden">Judge </span>
-                  <span className="hidden lg:inline">J</span>
+                  <span className="sm:hidden lg:inline">J</span>
+                  <span className="hidden sm:inline lg:hidden">Judge </span>
                   {j + 1}
                 </span>
                 <span className="sr-only">Judge {j + 1}</span>
@@ -194,7 +198,10 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
             <th scope="col" className={cn(CELL, "font-medium")}>
               Avg
             </th>
-            <th scope="col" className="py-2 pr-4 pl-3 text-right font-medium">
+            <th
+              scope="col"
+              className={cn("py-2 pl-2 text-right font-medium sm:pl-3", LAST)}
+            >
               Points
             </th>
           </tr>
@@ -202,8 +209,11 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
         <tbody>
           {entry.rows.map((row) => (
             <tr key={row.criterion.id} className="border-t">
-              <th scope="row" className="py-2 pl-4 text-left font-normal">
-                <span className="block text-foreground">
+              <th
+                scope="row"
+                className={cn("py-2 text-left font-normal", FIRST)}
+              >
+                <span className="block break-words text-foreground">
                   {row.criterion.name}
                 </span>
                 <span className={cn("block text-muted-foreground", NUM)}>
@@ -215,12 +225,11 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
                   {score}
                 </td>
               ))}
-              <td className={cn(CELL, NUM)}>
-                {oneDecimal(row.average)}
-              </td>
+              <td className={cn(CELL, NUM)}>{oneDecimal(row.average)}</td>
               <td
                 className={cn(
-                  "py-2 pr-4 pl-3 text-right font-semibold text-foreground",
+                  "py-2 pl-2 text-right font-semibold text-foreground sm:pl-3",
+                  LAST,
                   NUM,
                 )}
               >
@@ -281,14 +290,14 @@ export function FairJudging() {
               <span className={NUM}>{c.weightPercent}%</span>
             </span>
           ))}
-          . Two judges score three teams.
+          . Two judges (J1 and J2) score three teams.
         </p>
 
         <div className="mt-4 rounded-lg bg-muted px-4 py-3">
           <p className="font-medium text-pretty">
             Points for a criterion = the judges&apos; average ÷ the max score ×
-            the weight. The total adds up the points for every criterion, out
-            of 100.
+            the weight. The total adds up the points for every criterion, out of
+            100.
           </p>
           <p className="mt-2 text-small text-muted-foreground">
             {shown.team.name}, {step.criterion.name}:{" "}
@@ -315,8 +324,8 @@ export function FairJudging() {
         </ol>
 
         <figcaption className="mt-4 text-small text-pretty text-muted-foreground">
-          Sample teams and scores. The totals and ranks are computed by the
-          same code that ranks real events.
+          Sample teams and scores. The totals and ranks are computed by the same
+          code that ranks real events.
         </figcaption>
       </figure>
     </LandingSection>

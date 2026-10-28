@@ -10,9 +10,10 @@ import { canSeePhone } from "@/lib/domain/profile";
 import { prisma } from "@/lib/prisma";
 
 // Any signed-in user can view any profile, read-only (Decision 12). The
-// phone is only read for organizers and the owner (canSeePhone); everyone
-// else gets null, so it never reaches their page. The session and params
-// are read inside Suspense because Cache Components is on.
+// phone is only read for the owner and for an organizer of an event the
+// owner registered for (canSeePhone); everyone else gets null, so it never
+// reaches their page. The session and params are read inside Suspense
+// because Cache Components is on.
 
 export default function ProfilePage({
   params,
@@ -31,7 +32,21 @@ async function UserProfile({
 }: Pick<PageProps<"/profile/[userId]">, "params">) {
   const viewer = await requireUser();
   const { userId } = await params;
-  const showPhone = canSeePhone(viewer, userId);
+  // One small lookup, for organizers only: is this person registered for
+  // any event the viewer created?
+  const sharedRegistration =
+    viewer.role === "ORGANIZER" && viewer.id !== userId
+      ? await prisma.eventRegistration.findFirst({
+          where: { userId, event: { createdById: viewer.id } },
+          select: { id: true },
+        })
+      : null;
+  const showPhone = canSeePhone({
+    viewerId: viewer.id,
+    viewerRole: viewer.role,
+    ownerId: userId,
+    ownerRegisteredWithViewerEvent: sharedRegistration !== null,
+  });
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

@@ -93,7 +93,8 @@ export default function PrivacyPage() {
             you are. The rest of your profile helps people form teams.
           </li>
           <li>
-            The optional phone lets an organizer reach you during an event.
+            The optional phone lets the organizer of an event you registered
+            for reach you during it.
           </li>
           <li>
             Registrations, teams, submissions and scores are the event itself:
@@ -110,8 +111,9 @@ export default function PrivacyPage() {
             links. Visitors who aren&apos;t signed in can&apos;t open them.
           </li>
           <li>
-            <strong>Your phone number</strong> is shown only to you and to
-            organizers. Other participants and judges never see it.
+            <strong>Your phone number</strong> is shown only to you and to the
+            organizers of events you register for. Other organizers,
+            participants and judges never see it.
           </li>
           <li>
             <strong>Your email address</strong> is shown only to you and to

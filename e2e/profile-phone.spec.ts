@@ -4,8 +4,12 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 
 // The optional profile phone: typed any way, saved as +998…, shown grouped;
 // a value that isn't a phone is flagged on blur; clearing it saves nothing.
-// On /profile/[userId] only organizers and the owner see it. The organizer
-// logs in with SEED_ORGANIZER_EMAIL / SEED_ORGANIZER_PASSWORD from .env.
+// On /profile/[userId] only the owner and the organizers of events the owner
+// registered for see it; other organizers, participants and judges don't.
+// Needs the demo seed (npm run db:seed:demo): the first organizer
+// (SEED_ORGANIZER_EMAIL / SEED_ORGANIZER_PASSWORD) created "Open Hack · live";
+// organizer2@hackhub.test and judge@hackhub.test log in with
+// SEED_DEMO_PASSWORD.
 
 test.use({
   viewport: { width: 390, height: 844 },
@@ -117,7 +121,45 @@ async function sessionUserId(page: Page): Promise<string> {
 
 const telLink = (page: Page) => page.locator("main a[href^='tel:']");
 
-test("only organizers and the owner see a profile's phone", async ({
+async function logIn(
+  page: Page,
+  { email, password }: { email: string; password: string },
+  home: RegExp,
+) {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(home);
+}
+
+const ORGANIZER = {
+  email: process.env.SEED_ORGANIZER_EMAIL!,
+  password: process.env.SEED_ORGANIZER_PASSWORD!,
+};
+const ORGANIZER2 = {
+  email: "organizer2@hackhub.test",
+  password: process.env.SEED_DEMO_PASSWORD!,
+};
+const JUDGE = {
+  email: "judge@hackhub.test",
+  password: process.env.SEED_DEMO_PASSWORD!,
+};
+const OPEN_EVENT = "Open Hack · live";
+
+/** No phone on the page at all, not even its label. */
+async function expectNoPhone(page: Page) {
+  await expect(
+    page.getByRole("heading", { name: "Phone Tester" }),
+  ).toBeVisible();
+  await expect(telLink(page)).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Phone", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator("main")).not.toContainText("886");
+}
+
+test("only the owner and their events' organizers see a profile's phone", async ({
   browser,
 }) => {
   // A saves a phone.
@@ -132,25 +174,81 @@ test("only organizers and the owner see a profile's phone", async ({
   await expect(telLink(a)).toHaveAttribute("href", "tel:+998908865412");
   await expect(telLink(a)).toHaveText("+998 90 886 54 12");
 
-  // Another participant sees no phone at all, not even its label.
-  const b = await phonePage(browser);
-  await registerFresh(b);
-  await b.goto(`/profile/${aId}`);
-  await expect(b.getByRole("heading", { name: "Phone Tester" })).toBeVisible();
-  await expect(telLink(b)).toHaveCount(0);
-  await expect(
-    b.getByRole("heading", { name: "Phone", exact: true }),
-  ).toHaveCount(0);
-  await expect(b.locator("main")).not.toContainText("886");
-
-  // The organizer does.
+  // Until A registers for one of their events, the organizer doesn't.
   const o = await phonePage(browser);
-  await o.goto("/login");
-  await o.getByLabel("Email").fill(process.env.SEED_ORGANIZER_EMAIL!);
-  await o.getByLabel("Password").fill(process.env.SEED_ORGANIZER_PASSWORD!);
-  await o.getByRole("button", { name: "Log in" }).click();
-  await expect(o).toHaveURL(/\/organizer/);
+  await logIn(o, ORGANIZER, /\/organizer/);
+  await o.goto(`/profile/${aId}`);
+  await expectNoPhone(o);
+
+  // A registers for the first organizer's open event.
+  await a.goto("/events");
+  await a
+    .getByRole("link", { name: new RegExp(OPEN_EVENT) })
+    .first()
+    .click();
+  await expect(a).toHaveURL(/\/events\/[^/]+$/);
+  await a.getByRole("button", { name: "Register", exact: true }).click();
+  await expect(
+    a.getByRole("link", { name: "Registered (done)" }),
+  ).toBeVisible();
+
+  // Now that organizer does.
   await o.goto(`/profile/${aId}`);
   await expect(telLink(o)).toHaveAttribute("href", "tel:+998908865412");
   await expect(telLink(o)).toHaveText("+998 90 886 54 12");
+
+  // organizer2, whose own event A isn't registered for, doesn't.
+  const o2 = await phonePage(browser);
+  await logIn(o2, ORGANIZER2, /\/organizer/);
+  await o2.goto(`/profile/${aId}`);
+  await expectNoPhone(o2);
+
+  // Another participant doesn't.
+  const b = await phonePage(browser);
+  await registerFresh(b);
+  await b.goto(`/profile/${aId}`);
+  await expectNoPhone(b);
+
+  // A judge doesn't.
+  const j = await phonePage(browser);
+  await logIn(j, JUDGE, /\/judge/);
+  await j.goto(`/profile/${aId}`);
+  await expectNoPhone(j);
+});
+
+test("only the organizer who created an event sees Manage event on its page", async ({
+  browser,
+}) => {
+  const manage = (page: Page) =>
+    page.getByRole("link", { name: "Manage event" });
+
+  // The first organizer created the open event.
+  const o = await phonePage(browser);
+  await logIn(o, ORGANIZER, /\/organizer/);
+  await o.goto("/events");
+  await o
+    .getByRole("link", { name: new RegExp(OPEN_EVENT) })
+    .first()
+    .click();
+  await expect(o).toHaveURL(/\/events\/[^/]+$/);
+  const eventPath = new URL(o.url()).pathname;
+  await expect(manage(o)).toBeVisible();
+  await expect(manage(o)).toHaveAttribute("href", `/organizer${eventPath}`);
+
+  // organizer2 gets a note instead: no Manage event, nothing to register.
+  const o2 = await phonePage(browser);
+  await logIn(o2, ORGANIZER2, /\/organizer/);
+  await o2.goto(eventPath);
+  await expect(o2.getByRole("heading", { level: 1 })).toHaveText(OPEN_EVENT);
+  await expect(manage(o2)).toHaveCount(0);
+  // The rail's copy is hidden below md; the docked one shows.
+  await expect(
+    o2
+      .getByText("Organizers don't register for events.")
+      .filter({ visible: true }),
+  ).toHaveCount(1);
+  await expect(o2.getByRole("button", { name: "Register" })).toHaveCount(0);
+  await expect(
+    o2.getByRole("link", { name: "Log in to register" }),
+  ).toHaveCount(0);
 });

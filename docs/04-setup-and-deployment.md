@@ -101,6 +101,31 @@ Events: **Demo Hack · judging** (registration and submissions closed, ready for
 closed). Each organizer's Events I run lists only their own. Running the demo seed again puts the events back in this
 state. Never run it in production.
 
+### Showcase data (wipes the database)
+
+`prisma/seed-showcase.ts` **deletes everything** in the database it points at (every table except `_prisma_migrations`)
+and fills it with realistic demo data: 5 organizers, 15 judges and 1,000 participants (Gmail-style emails, `+998` phones,
+password `12345678i` for everyone), and 50 events, 10 per organizer: 2 finished, 2 in judging, 2 live with submissions
+open, 2 live with registration open and 2 upcoming, with criteria, teams, submissions and scores to match.
+
+- It refuses to run unless `SHOWCASE_CONFIRM=wipe:<database name>` names the database it is connected to, and prints the
+  host and database first.
+- It runs in one transaction and checks the data (criteria total 100, team sizes, scores only for submitted teams, unique
+  emails, phones and invite codes, and more) before committing. If a check fails, it rolls back and the old data stays.
+- It's deterministic: running it again gives the same people, events and teams. Event dates are relative to today in
+  Tashkent, or to `--today=YYYY-MM-DD`.
+- It's never part of a deploy. Back up first (see Backups), then pause automatic deploys while it runs.
+
+```bash
+# locally
+SHOWCASE_CONFIRM=wipe:hackhub npm run db:seed:showcase
+# production, in the migrate image (it has tsx and prisma/)
+docker compose -f docker-compose.prod.yml run --rm -e SHOWCASE_CONFIRM=wipe:<db> migrate npx tsx prisma/seed-showcase.ts
+```
+
+Afterwards, point `SEED_ORGANIZER_EMAIL` at the first organizer it prints and set `SEED_ORGANIZER_PASSWORD=12345678i`, so
+the seed on the next deploy finds that organizer instead of adding a new one.
+
 ## Production deployment (VPS + Docker)
 
 The VPS already runs nginx, which terminates HTTPS. The app stack runs in Docker, defined in `docker-compose.prod.yml`:

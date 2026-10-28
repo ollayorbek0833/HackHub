@@ -34,6 +34,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:seed:showcase": "tsx prisma/seed-showcase.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

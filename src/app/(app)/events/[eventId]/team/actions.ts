@@ -20,11 +20,13 @@ import {
 } from "@/lib/domain/teams";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { lockParticipant } from "@/lib/transactions/lock-participant";
 import { createTeamSchema, joinTeamSchema } from "@/lib/validation/teams";
 
 // Create, join and leave a team (docs/07 > Transactions, docs/08 > My team).
 // Server actions are public endpoints: each one checks the role, the event,
-// the registration and the team rules itself, inside a transaction.
+// the registration and the team rules itself, inside a transaction. Create and
+// join re-check the role there too, under a lock on the user row.
 
 const NAME_TAKEN = "A team with this name already exists in this event.";
 const UNKNOWN_CODE =
@@ -83,6 +85,7 @@ export async function createTeam(
   for (let attempt = 1; attempt <= INVITE_CODE_ATTEMPTS; attempt++) {
     try {
       await prisma.$transaction(async (tx) => {
+        await lockParticipant(tx, user.id);
         if (!(await isRegistered(tx, event.id, user.id))) {
           throw new RuleError(NOT_REGISTERED);
         }
@@ -161,6 +164,7 @@ export async function joinTeam(
 
   try {
     const teamName = await prisma.$transaction(async (tx) => {
+      await lockParticipant(tx, user.id);
       const found = await tx.team.findUnique({
         where: { inviteCode: code },
         select: { id: true, eventId: true },

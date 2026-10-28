@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ExternalLinkIcon, LockIcon } from "lucide-react";
 
 import { formatDateTime } from "@/components/judging/format";
@@ -17,6 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { judgeTeamsInEvent } from "@/lib/queries/judging";
 import { scoreFieldName } from "@/lib/validation/scoring";
 
+import Loading from "../../loading";
 import { saveScores } from "./actions";
 
 export const metadata: Metadata = { title: "Score a team" };
@@ -25,9 +27,18 @@ export const metadata: Metadata = { title: "Score a team" };
 // event's queue on the left (desktop), the project and the scorecard on the
 // right. On phones the queue lives on /judge; here a back link and "2 of 7"
 // keep the place. Every judge may score every submitted team (Decision 1).
-// Rendered under judge/loading.tsx, so reading the session, params and the
-// database here is fine (Cache Components).
-export default async function ScoreTeamPage({ params }: PageProps<"/judge/teams/[teamId]">) {
+// params, the session and the database are read inside this page's own
+// Suspense: judge/loading.tsx is already on screen when the judge moves to the
+// next team in the queue, so it doesn't cover that navigation.
+export default function ScoreTeamPage({ params }: PageProps<"/judge/teams/[teamId]">) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ScoreTeam params={params} />
+    </Suspense>
+  );
+}
+
+async function ScoreTeam({ params }: Pick<PageProps<"/judge/teams/[teamId]">, "params">) {
   const judge = await requireRole("JUDGE");
   const { teamId } = await params;
 

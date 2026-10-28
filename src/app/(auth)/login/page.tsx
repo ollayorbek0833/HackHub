@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { Suspense } from "react";
 
 import { LogoMark } from "@/components/brand/logo";
 import { HardRedirect } from "@/components/auth/hard-redirect";
@@ -14,6 +15,7 @@ import { ROLE_HOME } from "@/lib/auth/permissions";
 import { safeCallbackUrl } from "@/lib/auth/redirects";
 import { pageMetadata } from "@/lib/site";
 
+import Loading from "../loading";
 import { login } from "./actions";
 
 export const metadata = pageMetadata({
@@ -27,8 +29,18 @@ export const metadata = pageMetadata({
 // The proxy handles a page load; a client-side visit (a tab still showing the
 // signed-out header) gets here and leaves with a full load, which re-renders
 // the header and tab bar (components/auth/hard-redirect).
-// Rendered under (auth)/loading.tsx, so reading the session here is fine.
-export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+// The session and searchParams are read inside this page's own Suspense:
+// (auth)/loading.tsx is already on screen when someone follows the link
+// between /login and /register, so it doesn't cover that navigation.
+export default function LoginPage({ searchParams }: PageProps<"/login">) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Login searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function Login({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
   // Auth.js uses randomness before it reads the request: opt out of prerendering.
   await connection();
   const user = await getCurrentUser();

@@ -130,8 +130,8 @@ Use an interactive `prisma.$transaction(async (tx) => …)` whenever a rule read
 | Operation | Inside the transaction |
 |---|---|
 | **Save criteria** (#10) | `SELECT … FROM events WHERE id = $1 FOR UPDATE` first, so a judge's score save can't commit between the check and the delete (as built, `lib/transactions/save-criteria.ts`). Any score for the event → `RuleError` (locked, Decision 6). `validateCriteria(list)` (weights total 100). `deleteMany` the event's criteria, `createMany` the new list, so a half-saved total is never visible |
-| **Create team** (#6) | Registered, not on a team. Create the team with a new invite code, then the creator's `TeamMember` with scalar ids. On a P2002 on `invite_code`, retry up to 3 times |
-| **Join team** (#6) | `SELECT id FROM teams WHERE id = $1 FOR UPDATE` (`tx.$queryRaw`) so two people can't take the last place. Then: registered, not on a team, team hasn't submitted, members < `maxTeamSize` (Decision 4) |
+| **Create team** (#6) | `FOR SHARE` on the user row, still a participant. Registered, not on a team. Create the team with a new invite code, then the creator's `TeamMember` with scalar ids. On a P2002 on `invite_code`, retry up to 3 times |
+| **Join team** (#6) | `FOR SHARE` on the user row, still a participant. `SELECT id FROM teams WHERE id = $1 FOR UPDATE` (`tx.$queryRaw`) so two people can't take the last place. Then: registered, not on a team, team hasn't submitted, members < `maxTeamSize` (Decision 4) |
 | **Leave team** (#6) | Lock the team row. No submission yet (Decision 9). Delete the membership; if no members are left, delete the team |
 | **Submit project** (#7) | `FOR SHARE` on the event row, so "close submissions" can't slip in. `canSubmit(event)`, then upsert on `teamId` (one submission per team) |
 | **Save scores** (#8) | `FOR SHARE` on the event row, which serializes with Save criteria and Publish results (both `FOR UPDATE`). Event in judging (Decision 2), team has a submission, criteria belong to the event. Upsert each filled score; delete this judge's score only for a criterion submitted blank. Input that isn't a whole number in range is refused, never treated as blank |
@@ -141,9 +141,10 @@ Use an interactive `prisma.$transaction(async (tx) => …)` whenever a rule read
 
 Publishing results (#12) is a single update of `resultsPublished` under the event row lock; the scoring rules read that flag.
 
-**Known gap (after the release):** Create and Join team check the participant's role before their transaction, so a join
-that starts just before an organizer makes that user a judge can still commit. The fix is to take `FOR SHARE` on the
-user row and re-check the role inside the team transaction. Logged in the [test report](06-test-report.md#bug-log).
+**Role changes and teams:** Create and Join team first take `FOR SHARE` on the user row and re-check that the user is
+still a participant (`lib/transactions/lock-participant.ts`). Change role takes `FOR UPDATE` on the same row, so a join
+and a role change can't both commit: whichever comes second sees the other's write and refuses (bug 3 in the
+[test report](06-test-report.md#bug-log), fixed 29 Oct).
 
 ### `lib/domain`: the rules as pure functions
 

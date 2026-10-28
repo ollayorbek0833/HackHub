@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { Suspense } from "react";
 
 import { LogoMark } from "@/components/brand/logo";
 import { HardRedirect } from "@/components/auth/hard-redirect";
@@ -13,6 +14,7 @@ import { getCurrentUser } from "@/lib/auth/dal";
 import { ROLE_HOME } from "@/lib/auth/permissions";
 import { pageMetadata } from "@/lib/site";
 
+import Loading from "../loading";
 import { register } from "./actions";
 
 export const metadata = pageMetadata({
@@ -23,9 +25,19 @@ export const metadata = pageMetadata({
 });
 
 // docs/08 > /register. Signed-in users go to their role home, with a full
-// load so the header and tab bar re-render (as on /login). Rendered under
-// (auth)/loading.tsx, so reading the session here is fine.
-export default async function RegisterPage() {
+// load so the header and tab bar re-render (as on /login). The session is read
+// inside this page's own Suspense: (auth)/loading.tsx is already on screen
+// when someone follows the link between /login and /register, so it doesn't
+// cover that navigation.
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Register />
+    </Suspense>
+  );
+}
+
+async function Register() {
   // Auth.js uses randomness before it reads the request: opt out of prerendering.
   await connection();
   const user = await getCurrentUser();

@@ -7,6 +7,8 @@ export const ALREADY_ON_TEAM =
   "You're already on a team in this event. Leave it first.";
 export const TEAM_SUBMITTED =
   "This team has already submitted, so it can't take new members.";
+export const NOT_A_PARTICIPANT =
+  "Only participants can be on a team. Your role has changed; reload the page.";
 export const CANT_LEAVE_SUBMITTED =
   "You can't leave after your team has submitted.";
 export const teamFullMessage = (maxTeamSize: number) =>

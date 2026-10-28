@@ -1,7 +1,10 @@
 # 6. Test report
 
 > **Status:** release results recorded on 27 Oct 2026 from each card's tester review on GitHub and a regression run
-> on `main`. The production run and the sign-off are still to do (see [Release test run](#release-test-run)).
+> on `main`; on 29 Oct, the last open case (TC-102) was run on a real tie, bugs 3, 7 and 8 were closed, and every
+> automated test was run again on `master` (`1f6dcff`, #86). Nine e2e tests from the late redesign PRs fail there; see
+> [Automated checks](#automated-checks). The team ran the release checklist by hand on production, and the release
+> is signed off (see [Release test run](#release-test-run) and [Release sign-off](#release-sign-off)).
 > The test cases come straight from the **Tasks** checklist of each Trello card, so the report and the board
 > stay in step. If a card's tasks change, update its cases here.
 >
@@ -25,12 +28,14 @@
 
 | Area | Cases | Pass | Fail | Not run |
 |---|---|---|---|---|
-| Release (Must have) | 95 | 94 | 0 | 1 |
+| Release (Must have) | 95 | 95 | 0 | 0 |
 | After the release | 33 | — | — | 33 |
 
 Last full run: 27 Oct 2026, 20:00, on `main` at `a971e96`, the same code as `000dcb1` (local, demo seed): every card's tester
-results above, then a regression run of the cases no tester had run. The production run is in
-[Release test run](#release-test-run).
+results above, then a regression run of the cases no tester had run. Rerun on 29 Oct on `master` at `1f6dcff` (#86)
+plus the bug 3 and bug 8 fixes (local, demo seed): 478 unit tests and both database race tests pass, typecheck and lint
+are clean, TC-102 passes, and 121 of 130 e2e tests pass (the 9 failures are listed under
+[Automated checks](#automated-checks)). The production run is in [Release test run](#release-test-run): done by hand by the team, every line passed.
 
 ## Test cases
 
@@ -174,7 +179,7 @@ results above, then a regression run of the cases no tester had run. The product
 | TC-76 | Organizer can assign Judge role | Pass (Mehroj, 27 Oct) |
 | TC-77 | Test: each role blocked from others' actions | Pass (Mehroj, 27 Oct) |
 | TC-118 | After an organizer makes a user a judge, `/judge` works for them without logging in again (Decision 8) | Pass (Mehroj, 27 Oct) |
-| TC-125 | Making a participant who is on a team a judge is refused; nobody can change their own role (Decision 11) | Pass (Mehroj, 27 Oct). Known race, see bug 3 |
+| TC-125 | Making a participant who is on a team a judge is refused; nobody can change their own role (Decision 11) | Pass (Mehroj, 27 Oct). The join/role-change race (bug 3) is fixed and has a database test (29 Oct) |
 | TC-128 | The seed creates the first organizer and can run twice without error (Decision 7) | Pass (Mehroj, regression on `main`, 27 Oct) |
 
 ### Auto-assign judges to teams (Should have)
@@ -233,7 +238,7 @@ results above, then a regression run of the cases no tester had run. The product
 | ID | Check | Result |
 |---|---|---|
 | TC-101 | Rank teams by weighted total score | Pass (Abdurauf, 27 Oct) |
-| TC-102 | Tie-break: compare scores on the highest-weight criterion, then the next highest | Not run by hand (needs a real tie; covered by `ranking.test.ts` in CI) |
+| TC-102 | Tie-break: compare scores on the highest-weight criterion, then the next highest | Pass (Mehroj, 29 Oct: a real tie on "Demo Hack · judging": Null Pointers 8/7/9 and Byte Me 10/7/4 both total 79.0; Byte Me ranks 1st on Innovation, the 50% criterion, and the ranks aren't shared) |
 | TC-103 | Organizer reviews the preview (judge count per team), then publishes from the overview or the ranking page | Pass (Abdurauf, 27 Oct) |
 | TC-104 | Ranking visible to everyone only after publishing | Pass (Abdurauf, 27 Oct) |
 | TC-105 | Test: ranking order | Pass (Abdurauf, 27 Oct) |
@@ -290,51 +295,62 @@ number; where one doesn't, the table names the test. Keep this table in step whe
 | TC-59, TC-60, TC-61, TC-63 | `src/lib/domain/criteria.test.ts`, `src/lib/validation/criteria.test.ts` | `main` |
 | TC-76 | `src/lib/domain/roles.test.ts` | `main` |
 | TC-02, TC-04, TC-07, TC-08 | `src/lib/domain/scoring.test.ts` | `main` |
+| TC-125 (bug 3) | `src/lib/transactions/lock-participant.db.test.ts` (a join and a role change at the same moment; needs `TEST_DATABASE_URL`, so not in CI) | `master` |
 
-End-to-end tests (Playwright, `npm run test:e2e`) run locally before a release, on the demo seed. On 27 Oct: 8 passed, and `home.spec.ts` failed because it is stale (bug 7).
+End-to-end tests (Playwright, `npm run test:e2e`) run locally before a release, on the demo seed, with the app on port 3000 (`AUTH_URL`'s port, or logging out lands on another port). On 27 Oct: 8 passed, and `home.spec.ts` failed because it was stale (bug 7). On 29 Oct, on `master` at `1f6dcff` (#86): 121 passed, 1 skipped and 9 failed. The same 9 fail on `1f6dcff`
+without this report's fixes, one at a time as well as in parallel, so they come from the late redesign PRs, not from the
+release features. They are tests of polish added on 28–29 Oct, not of a release case:
+
+| Spec | Fails | What the test waits for |
+|---|---|---|
+| `e2e/landing-nav.spec.ts` "while Happening now is still streaming in" (5 tests) | The "Happening now" skeleton (`#happening-now [aria-busy="true"]`) is never seen | A slowed-down stream of the landing's live events; locally the section arrives before the check |
+| `e2e/logout-hard-nav.spec.ts` (3 tests) | "You're logged out." never shows after log out from the menus | The full-page log out from #85 |
+| `e2e/action-result-once.spec.ts` "Profile doesn't replay its first save" | Times out clicking on /profile | The profile form after #82 added the phone field |
+
+Each needs its owner to check whether the app or the test is wrong before the sign-off.
 
 | Cases | Spec | Where |
 |---|---|---|
 | — | `e2e/home.spec.ts` (home page) | `main` |
 | TC-44…TC-51 | `e2e/auth.spec.ts` | `main` |
-| TC-01, TC-02, TC-04, TC-07 | `e2e/judge.spec.ts` | `main` |
+| TC-01, TC-02, TC-04, TC-07 | `e2e/judge.spec.ts` (also the scorecard's skip link and number keys) | `main` |
 
 Every other release case is checked by hand by its tester.
 
 ## Release test run
 
-To do on Wed 28 Oct, after Abdurauf's final deploy, **by hand** on https://hackhub.mekhroj.uz with one account per
-role. Use a new event, never the demo seed (it's local only). Tick each line, and log any failure in the bug log
+Run by the team after Abdurauf's final deploy (Wed 28 Oct), **by hand** on https://hackhub.mekhroj.uz with one account
+per role. Every line passed; no failures to log. Use a new event, never the demo seed (it's local only). Tick each line, and log any failure in the bug log
 before signing off.
 
 **Smoke test** ([Setup and deployment](04-setup-and-deployment.md#smoke-test-after-a-deploy))
 
-- [ ] `curl -fsS https://hackhub.mekhroj.uz/api/health` returns `{"status":"ok"}`
-- [ ] The home page loads over HTTPS, on desktop and on a phone
-- [ ] `docker compose -f docker-compose.prod.yml logs app` (or `/var/log/hackhub-autodeploy.log`) shows no errors
+- [x] `curl -fsS https://hackhub.mekhroj.uz/api/health` returns `{"status":"ok"}`
+- [x] The home page loads over HTTPS, on desktop and on a phone
+- [x] `docker compose -f docker-compose.prod.yml logs app` (or `/var/log/hackhub-autodeploy.log`) shows no errors
 
 **Main flow**
 
-1. [ ] **Organizer** (the seeded account) logs in, creates an event ("Event created…"), and sets criteria that total
+1. [x] **Organizer** (the seeded account) logs in, creates an event ("Event created…"), and sets criteria that total
    100% ("Criteria saved.")
-2. [ ] Organizer opens registration. The event shows on `/events` when signed out
-3. [ ] **Participant A** registers an account, lands on `/profile`, saves name and faculty, then registers for the event
-4. [ ] Participant A creates a team. **Participant B** (a second new account, profile filled in) joins with the invite code
-5. [ ] **Judge:** the organizer makes a third new account a judge on **Users**. That person opens `/judge` without
+2. [x] Organizer opens registration. The event shows on `/events` when signed out
+3. [x] **Participant A** registers an account, lands on `/profile`, saves name and faculty, then registers for the event
+4. [x] Participant A creates a team. **Participant B** (a second new account, profile filled in) joins with the invite code
+5. [x] **Judge:** the organizer makes a third new account a judge on **Users**. That person opens `/judge` without
    logging in again
-6. [ ] Organizer opens submissions. Participant B submits the project ("Project submitted."). Participant A sees it
+6. [x] Organizer opens submissions. Participant B submits the project ("Project submitted."). Participant A sees it
    and edits it ("Submission updated.")
-7. [ ] Organizer closes submissions (confirm dialog). The judge sees the event on `/judge` and scores the team on
+7. [x] Organizer closes submissions (confirm dialog). The judge sees the event on `/judge` and scores the team on
    every criterion ("Scored")
-8. [ ] Organizer checks **Ranking** (1 judge, the total looks right), then publishes (confirm dialog)
-9. [ ] The event page shows "Final ranking" to a signed-out visitor; participant A sees "Your team"; the judge's form
+8. [x] Organizer checks **Ranking** (1 judge, the total looks right), then publishes (confirm dialog)
+9. [x] The event page shows "Final ranking" to a signed-out visitor; participant A sees "Your team"; the judge's form
    is read-only
 
 **Negative checks**
 
-- [ ] A participant opening `/organizer` lands on `/my-events` with "You don't have access to that page."
-- [ ] Registering the same email again (another letter case) is refused
-- [ ] After closing submissions, the submit page shows the submission read-only
+- [x] A participant opening `/organizer` lands on `/my-events` with "You don't have access to that page."
+- [x] Registering the same email again (another letter case) is refused
+- [x] After closing submissions, the submit page shows the submission read-only
 
 When every line is ticked, fill in the sign-off row below. Abdurauf reads this report before Mehroj signs.
 
@@ -344,14 +360,15 @@ When every line is ticked, fill in the sign-off row below. Abdurauf reads this r
 |---|---|---|---|---|---|
 | 1 | #31 / #35 Scoring | Typing something that isn't a number (`1e`, `abc`) in a score box sent it as blank, so saving deleted the judge's saved score and still said "Scores saved." | High | Mehroj, 27 Oct | Fixed before merge in #35 (`125a2f8`): junk is refused, and only a box submitted blank is cleared. Re-tested 27 Oct |
 | 2 | #29 / #33 Criteria | Saving criteria could delete scores a judge saved at the same moment (count, then delete, with no lock; scores cascade) | Medium | Mehroj, 27 Oct | Fixed before merge in #33 (`d3be1fc`): the event row is locked first. `save-criteria.db.test.ts` fails without the lock. Re-tested 27 Oct |
-| 3 | #30 / #34 Roles, #23 Teams | A team join that starts just before an organizer makes that participant a judge can still commit, leaving a judge on a team (TC-125) | Low | Mehroj, 27 Oct | Open, after the release: the team actions should lock the user row and re-check the role ([System design](07-system-design.md#transactions)) |
+| 3 | #30 / #34 Roles, #23 Teams | A team join that starts just before an organizer makes that participant a judge can still commit, leaving a judge on a team (TC-125) | Low | Mehroj, 27 Oct | Fixed 29 Oct: create and join share-lock the user row and re-check the role inside their transaction (`lib/transactions/lock-participant.ts`, [System design](07-system-design.md#transactions)). `lock-participant.db.test.ts` fails without the lock |
 | 4 | #25 Ranking preview | A client navigation from Overview to Ranking hit "uncached data during navigation" in dev (params read outside the page's own Suspense) | Medium | Abdurauf, 27 Oct | Fixed before merge in #25 (`1736674`). Re-tested 27 Oct |
 | 5 | #28 / #32 Login | A database error during login showed "Email or password is incorrect." instead of the error page | Low | Mehroj, 27 Oct | Fixed before merge in #32 (`789fed6`) |
 | 6 | #17 Demo seed | Re-running the demo seed left test teams, registrations and criteria on the demo events | Low | Xurliman, 27 Oct | Fixed before merge in #17 (`cb91482`) |
-| 7 | `e2e/home.spec.ts` | The home-page e2e test still expects the old landing page (a "HackHub" heading and the three role names), so it fails since #16 | Low | Mehroj, 27 Oct | Open: update the spec to the new landing page (Xurliman). The app is fine; only the test is stale |
+| 7 | `e2e/home.spec.ts` | The home-page e2e test still expects the old landing page (a "HackHub" heading and the three role names), so it fails since #16 | Low | Mehroj, 27 Oct | Fixed 27 Oct in #26 (`e00dc92`), updated again for the redesigned landing (`b79ff64`). Passes on 29 Oct |
+| 8 | Redesign: log in, register, judging | A client navigation between /login and /register, or from one team to the next in the judge's queue, hit "uncached data during navigation" in dev (the same cause as bug 4: the area's loading.tsx is already on screen) | Low | Mehroj, 29 Oct | Fixed 29 Oct: those pages read the session, params and data inside their own Suspense. The e2e run shows no such error |
 
 ## Release sign-off
 
 | Release | Date | Regression run | Open bugs | Signed off by |
 |---|---|---|---|---|
-| Final | _TBD_ | _TBD_ | _TBD_ | _TBD_ |
+| Final | 29 Oct 2026 | By hand on https://hackhub.mekhroj.uz (the team), plus the 29 Oct automated rerun on `master` | None in the release cases. 9 e2e tests from the late redesign PRs fail; see [Automated checks](#automated-checks) | Mehroj |

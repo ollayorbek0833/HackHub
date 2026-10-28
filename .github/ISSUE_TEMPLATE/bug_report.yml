@@ -1,0 +1,57 @@
+name: Bug report
+description: Something isn't working as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in as an organizer and open an event ...
+        2. Close submissions and ...
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Signed in as
+      options:
+        - Participant
+        - Judge
+        - Organizer
+        - Signed out
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Live site (hackhub.mekhroj.uz)
+        - Local development
+        - Self-hosted with Docker
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Page and device
+      description: The URL path and the browser or phone, e.g. `/events/demo/team` on Safari, iPhone.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Remove passwords, session cookies, `AUTH_SECRET` and database URLs before pasting.
+      render: shell

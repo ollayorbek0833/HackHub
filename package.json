@@ -2,6 +2,28 @@
   "name": "hackhub",
   "version": "0.1.0",
   "private": true,
+  "description": "Web platform that runs a hackathon end to end: registration, teams with invite codes, project submissions, weighted judging by criteria and a published ranking.",
+  "license": "MIT",
+  "author": "HackHub contributors",
+  "keywords": [
+    "hackathon",
+    "hackathon-platform",
+    "event-management",
+    "judging",
+    "nextjs",
+    "react",
+    "typescript",
+    "prisma",
+    "postgresql"
+  ],
+  "homepage": "https://hackhub.mekhroj.uz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ollayorbek0833/HackHub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ollayorbek0833/HackHub/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

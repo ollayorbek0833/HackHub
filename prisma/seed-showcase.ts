@@ -405,6 +405,8 @@ type EventPlan = {
   criteria: { id: string; name: string; weightPercent: number; maxScore: number }[];
   registrants: Person[];
   regAt: Map<string, Date>;
+  /** Submitted projects, and how many took an idea from another theme. */
+  projects: { total: number; offTheme: number };
 };
 
 /** Calendar days an event spans. A "Night" runs overnight, so it spans two. */
@@ -558,6 +560,7 @@ function build() {
       criteria: withoutCriteria ? [] : makeCriteria(spec.theme),
       registrants: [],
       regAt: new Map(),
+      projects: { total: 0, offTheme: 0 },
     };
   });
 
@@ -681,8 +684,10 @@ function build() {
         }
       }
     };
-    // Ideas are drawn without replacement: the event's theme first, then its
-    // related themes, so no idea (and no title) repeats within an event.
+    // Ideas are drawn without replacement from the event's own theme, so no
+    // idea (and no title) repeats within an event. Every theme's pool is
+    // larger than its busiest event; related themes are only a safety net,
+    // and the invariants allow at most 10% off-theme projects per event.
     const themeIdeas = (theme: D.Theme) => {
       const own = D.THEME_IDEAS[theme].map((idea) => ({ ...idea, theme }));
       if (theme !== "ctf") return shuffle(own);
@@ -736,6 +741,8 @@ function build() {
       const idea = ideas.pop();
       if (!idea) throw new Error(`${event.spec.name} ran out of project ideas.`);
       const product = productFor(idea.theme);
+      event.projects.total++;
+      if (idea.theme !== event.spec.theme) event.projects.offTheme++;
       const teamSkills = shuffle([...new Set(group.flatMap((p) => p.skills))].filter((skill) => !D.SOFT_SKILLS.includes(skill))).slice(0, 3);
       const built = teamSkills.length > 1 ? `Built with ${teamSkills.slice(0, -1).join(", ")} and ${teamSkills.at(-1)}.` : "";
       const status = fill(pick(D.DEMO_STATUS_LINES), { n: between(6, 40) });
@@ -930,6 +937,19 @@ async function checkInvariants(tx: Tx, data: ReturnType<typeof build>) {
     }
   }
 
+  // Projects fit their event: at most 10% off-theme (the pools make it 0).
+  const submittedPerEvent = new Map(
+    (await tx.$queryRaw<{ event_id: string; n: bigint }[]>`
+      SELECT t.event_id, COUNT(*) AS n FROM submissions s JOIN teams t ON t.id = s.team_id GROUP BY t.event_id`).map((r) => [r.event_id, Number(r.n)]),
+  );
+  for (const plan of data.events) {
+    const { total, offTheme } = plan.projects;
+    if ((submittedPerEvent.get(plan.id) ?? 0) !== total) failures.push(`${plan.spec.name}: submission count doesn't match the plan`);
+    if (total > 0 && offTheme / total > 0.1) {
+      failures.push(`${plan.spec.name}: ${offTheme} of ${total} projects are off-theme, over 10%`);
+    }
+  }
+
   // Women-only events: at least 90% of registrants are women (the seed registers only women).
   const female = new Map(data.people.map((p) => [p.id, p.female]));
   for (const plan of data.events.filter((e) => e.spec.audience === "women")) {
@@ -1099,6 +1119,15 @@ async function printSummary(prisma: PrismaClient, data: ReturnType<typeof build>
     const state = submittedTeams.has(m.teamId) ? "submitted" : "not submitted yet";
     console.log(`  ${p.email.padEnd(36)} ${p.first} ${p.last}: ${team.name} in ${event.spec.name} (${state}), ${count} events`);
   }
+  console.log("\nProjects on theme (off-theme / submitted, per event)");
+  const withProjects = data.events.filter((e) => e.projects.total > 0).sort((a, b) => b.projects.total - a.projects.total);
+  for (const e of withProjects) {
+    const { total, offTheme } = e.projects;
+    console.log(`  ${e.spec.name.padEnd(32)} ${e.spec.theme.padEnd(9)} ${String(offTheme).padStart(2)} / ${String(total).padStart(2)}  ${Math.round((100 * offTheme) / total)}%`);
+  }
+  const offTotal = withProjects.reduce((sum, e) => sum + e.projects.offTheme, 0);
+  const allTotal = withProjects.reduce((sum, e) => sum + e.projects.total, 0);
+  console.log(`  ${"All events".padEnd(42)} ${String(offTotal).padStart(2)} / ${allTotal}  ${Math.round((100 * offTotal) / allTotal)}%`);
   console.log(`\nChecksum (emails, phones, team names): ${checksum}`);
   console.log(`Done in ${((Date.now() - started) / 1000).toFixed(1)} s.`);
 }

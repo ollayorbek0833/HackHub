@@ -1,15 +1,20 @@
 import Link from "next/link";
-import { ChevronDownIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { LandingSection } from "@/components/landing/section";
 import { REPO_URL } from "@/lib/site";
+import { cn } from "@/lib/utils";
+
+import styles from "./faq.module.css";
 
 // Landing section 7 (landing plan): common questions, as native
 // <details>/<summary>, so they open with the keyboard and work without
 // JavaScript. Every answer matches the app as built: the ranking rules
 // (docs/02 > Ranking, lib/domain/ranking), roles (Decision 11), the phone's
 // visibility (lib/domain/profile) and hosting (docs/04). Keep them in step.
+// One question is open at a time (the native exclusive accordion). It opens
+// and closes with a short height animation where the browser supports it
+// (faq.module.css), and instantly elsewhere or with reduced motion.
 
 function A({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -117,23 +122,43 @@ const QUESTIONS: { q: string; a: ReactNode }[] = [
 export function Faq() {
   return (
     <LandingSection id="faq" eyebrow="FAQ" title="Questions, answered">
-      <div className="max-w-3xl divide-y border-y">
+      {/* The list reaches 1rem past the text on each side (into the page's
+          own padding), so the open item's tint has room while the questions
+          stay in line with the heading at every width. */}
+      <div className="-mx-4 max-w-3xl divide-y border-y">
         {QUESTIONS.map(({ q, a }) => (
-          <details key={q} className="group">
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-sm py-3 text-lg font-medium outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+          <details key={q} name="faq" className={cn("group", styles.item)}>
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-sm px-4 py-3 text-lg font-medium outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:transition-colors motion-safe:duration-(--duration-fast) [&::-webkit-details-marker]:hidden">
               {/* An h3, so the questions show in the heading outline. */}
               <h3 className="text-pretty">{q}</h3>
-              <ChevronDownIcon
-                aria-hidden
-                className="size-5 shrink-0 text-muted-foreground group-open:rotate-180 motion-safe:transition-transform motion-safe:duration-(--duration-fast)"
-              />
+              <PlusMinus />
             </summary>
-            <div className="flex max-w-[70ch] flex-col gap-3 pb-6 text-pretty text-muted-foreground">
+            <div
+              className={cn(
+                "flex max-w-[70ch] flex-col gap-3 px-4 pb-6 text-pretty text-muted-foreground",
+                styles.answer,
+              )}
+            >
               {a}
             </div>
           </details>
         ))}
       </div>
     </LandingSection>
+  );
+}
+
+/** A plus that becomes a minus while its question is open: the upright bar
+ *  turns flat onto the other one. */
+function PlusMinus() {
+  return (
+    <span
+      aria-hidden
+      data-slot="faq-indicator"
+      className="relative size-5 shrink-0 text-muted-foreground group-open:text-primary group-hover:text-primary motion-safe:transition-colors motion-safe:duration-(--duration-fast)"
+    >
+      <span className="absolute inset-x-0.5 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-current" />
+      <span className="absolute inset-y-0.5 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-current group-open:rotate-90 motion-safe:transition-transform motion-safe:duration-(--duration-base) motion-safe:ease-(--ease-out-expo)" />
+    </span>
   );
 }

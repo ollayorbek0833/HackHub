@@ -168,6 +168,7 @@ Next.js 16 renamed middleware to proxy (`src/proxy.ts`, Node.js runtime). The bu
 | Read the session cookie: `export default auth((req) => …)` from `@/auth` | Query the database |
 | Signed out on `/my-events`, `/profile*`, `/events/*/team*`, `/judge*`, `/organizer*` → `/login?callbackUrl=<path>` | Redirect by role. A stale JWT role would bounce a judge promoted a minute ago from `/judge` (S-3). Role checks belong to `requireRole` |
 | Signed in on `/login` or `/register` → `ROLE_HOME[role]` | Be the only check. Every page and action still calls `requireRole` |
+| | Write the session cookie. Auth.js re-issues it on every read, so a prefetch that lands after log out would sign the user back in. `withoutSessionCookie` (`lib/auth/session-cookie.ts`) drops it; only log in and log out set it, and a session lasts 30 days from log in |
 
 The matcher skips `api`, `_next/static`, `_next/image` and files with an extension.
 

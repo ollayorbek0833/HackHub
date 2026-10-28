@@ -1,0 +1,84 @@
+/* Landing FAQ: how a question opens and closes (DESIGN.md > Motion).
+
+   Everything here is an enhancement over native <details>:
+   - The open item gets a surface tint and an amber hairline on the left, in
+     every browser and with reduced motion too (state, not motion).
+   - The height animation needs ::details-content and interpolate-size
+     (Chromium today). Where either is missing (Firefox, older Safari) the
+     item opens at once, exactly as plain <details> does.
+   - All motion sits under prefers-reduced-motion: no-preference; with
+     reduced motion an item opens instantly and fully.
+   No JavaScript measures anything, and nothing loops. */
+
+.item {
+  position: relative;
+  transition-property: background-color;
+}
+
+.item[open] {
+  background-color: var(--card);
+}
+
+/* The hairline: drawn from the top while the item opens. */
+.item::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 2px;
+  background-color: var(--primary);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.item[open]::before {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .item,
+  .item::before {
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  .item::before {
+    transition-property: transform;
+  }
+
+  /* Height: the content box grows from 0 to its natural size and back. On
+     close, content-visibility waits for the collapse to finish
+     (allow-discrete) before the content is hidden. */
+  @supports selector(::details-content) and (interpolate-size: allow-keywords) {
+    .item {
+      interpolate-size: allow-keywords;
+    }
+
+    .item::details-content {
+      block-size: 0;
+      overflow-y: clip;
+      transition:
+        block-size calc(var(--duration-base) + 50ms)
+          var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+        content-visibility calc(var(--duration-base) + 50ms) allow-discrete;
+    }
+
+    .item[open]::details-content {
+      block-size: auto;
+    }
+  }
+
+  /* The answer fades in and rises a little, just behind the height. This
+     works without ::details-content too. */
+  .item[open] .answer {
+    animation: answer-in var(--duration-slow)
+      var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) 40ms both;
+  }
+}
+
+@keyframes answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}

@@ -1,7 +1,8 @@
 import { CheckIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { ScoringStatusBadge } from "@/components/judging/scoring-status-badge";
+import { DrawIn } from "@/components/landing/draw-in";
 import { LandingSection } from "@/components/landing/section";
 import type { ScoringStatus } from "@/lib/domain/scoring";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,12 @@ import { cn } from "@/lib/utils";
 // progress rail, the team pass, the judge queue, the scorecard's number
 // buttons), marked "Example". The vignettes are decorative (aria-hidden): the
 // steps next to them carry the meaning.
+//
+// Motion (DrawIn, once, motion-safe only): when a vignette scrolls into view,
+// the participant's progress rail lights up step by step, and the judge's
+// chosen score is picked with a small pop. The server renders the finished
+// state, so without JavaScript, with reduced motion, or when a vignette is
+// already on screen at load, everything is simply there.
 
 const PARTICIPANT_STEPS = [
   {
@@ -56,7 +63,7 @@ export function ForParticipantsJudges() {
       title="Built for the people in the room"
       intro="Participants get a short path that works on a phone. Judges get a fast, fair way to score every team."
     >
-      <div className="grid gap-12 md:grid-cols-2 md:gap-10 lg:gap-16">
+      <DrawIn className="grid gap-12 md:grid-cols-2 md:gap-10 lg:gap-16">
         <RoleColumn
           id="participants"
           title="Participants"
@@ -71,7 +78,7 @@ export function ForParticipantsJudges() {
           steps={JUDGE_STEPS}
           vignette={<JudgeVignette />}
         />
-      </div>
+      </DrawIn>
     </LandingSection>
   );
 }
@@ -136,6 +143,9 @@ function Vignette({ className, children }: { className?: string; children: React
   );
 }
 
+/** How far apart the rail's steps light up as it enters view. */
+const RAIL_STEP_MS = 160;
+
 const RAIL = [
   { label: "Profile", done: true },
   { label: "Registered", done: true },
@@ -146,24 +156,46 @@ const RAIL = [
 function ParticipantVignette() {
   return (
     <Vignette className="mx-auto w-full max-w-sm">
-      {/* The progress rail, as inside an event. */}
-      <ol className="relative grid grid-cols-4">
+      {/* The progress rail, as inside an event. On entering view (DrawIn) it
+          starts unlit, then the line fills and each step lights up in turn,
+          RAIL_STEP_MS apart. */}
+      <ol data-draw-item className="group/rail relative grid grid-cols-4">
         {/* The line behind the dots, from the first dot's centre to the last. */}
         <span className="absolute top-3 right-[12.5%] left-[12.5%] h-px bg-border" />
-        {RAIL.map((step) => (
-          <li key={step.label} className="relative flex flex-col items-center gap-1.5">
+        {/* Its done part, from the first dot to the last done one. */}
+        <span
+          data-slot="rail-progress"
+          className="absolute top-3 left-[12.5%] h-px w-1/2 origin-left bg-primary/50 group-data-[draw=idle]/rail:scale-x-0 motion-safe:transition-transform motion-safe:duration-(--rail-fill) motion-safe:ease-linear"
+          style={{ "--rail-fill": `${2 * RAIL_STEP_MS}ms` } as CSSProperties}
+        />
+        {RAIL.map((step, i) => (
+          <li
+            key={step.label}
+            className="relative flex flex-col items-center gap-1.5"
+            style={{ "--step-delay": `${i * RAIL_STEP_MS}ms` } as CSSProperties}
+          >
             <span
+              data-slot="rail-dot"
               className={cn(
                 "flex size-6 items-center justify-center rounded-full border",
                 step.done ? "border-primary/50 bg-card" : "border-primary bg-card",
+                "group-data-[draw=idle]/rail:border-border",
+                "motion-safe:transition-colors motion-safe:delay-(--step-delay) motion-safe:duration-(--duration-base) motion-safe:ease-(--ease-out-expo)",
               )}
             >
-              {step.done && <CheckIcon className="size-3.5 text-primary" />}
+              {step.done && (
+                <CheckIcon
+                  data-slot="rail-check"
+                  className="size-3.5 text-primary group-data-[draw=idle]/rail:scale-0 group-data-[draw=idle]/rail:opacity-0 motion-safe:transition-[scale,opacity] motion-safe:delay-(--step-delay) motion-safe:duration-(--duration-base) motion-safe:ease-(--ease-out-expo)"
+                />
+              )}
             </span>
             <span
               className={cn(
                 "text-[0.6875rem] leading-none",
                 step.done ? "text-muted-foreground" : "font-semibold text-foreground",
+                !step.done &&
+                  "group-data-[draw=idle]/rail:text-muted-foreground motion-safe:transition-colors motion-safe:delay-(--step-delay) motion-safe:duration-(--duration-base)",
               )}
             >
               {step.label}
@@ -217,6 +249,9 @@ const QUEUE: { team: string; title: string; status: ScoringStatus }[] = [
   { team: "Night Owls", title: "Library Seat Finder", status: "NOT_STARTED" },
 ];
 
+/** The score the example judge gives on the scorecard row. */
+const CHOSEN_SCORE = 7;
+
 function JudgeVignette() {
   return (
     <Vignette>
@@ -239,24 +274,34 @@ function JudgeVignette() {
         ))}
       </ul>
 
-      {/* One scorecard row: the criterion, its weight and the number buttons. */}
-      <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+      {/* One scorecard row: the criterion, its weight and the number buttons.
+          On entering view (DrawIn) no score is picked yet; then the chosen
+          one is picked with a single pop (tick-in), as if just tapped. */}
+      <div
+        data-draw-item
+        className="group/score flex flex-col gap-2 rounded-lg border bg-background p-3"
+      >
         <div className="flex items-baseline gap-3">
           <p className="min-w-0 flex-1 font-medium">
             Innovation <span className="text-small font-normal text-muted-foreground">30%</span>
           </p>
           <p className="font-mono text-small text-muted-foreground tabular-nums">
-            <span className="text-foreground">7</span> / 10
+            <span className="text-foreground">{CHOSEN_SCORE}</span> / 10
           </p>
         </div>
         <div className="grid grid-cols-6 gap-1 sm:grid-cols-11">
           {Array.from({ length: 11 }, (_, score) => (
             <span
               key={score}
+              data-slot={score === CHOSEN_SCORE ? "chosen-score" : undefined}
               className={cn(
                 "flex h-8 items-center justify-center rounded-md border font-mono text-small tabular-nums",
-                score === 7
-                  ? "border-foreground bg-foreground font-semibold text-background ring-3 ring-ring/50"
+                score === CHOSEN_SCORE
+                  ? [
+                      "border-foreground bg-foreground font-semibold text-background ring-3 ring-ring/50",
+                      "group-data-[draw=idle]/score:border-input group-data-[draw=idle]/score:bg-transparent group-data-[draw=idle]/score:text-foreground group-data-[draw=idle]/score:ring-0",
+                      "group-data-[draw=done]/score:motion-safe:animate-tick-in motion-safe:transition-colors motion-safe:duration-(--duration-base)",
+                    ]
                   : "border-input",
               )}
             >

@@ -28,11 +28,11 @@ import { LandingSection } from "./section";
 //   motion nothing is ever hidden);
 // - hover and keyboard focus lift a card a little, warm its border toward
 //   amber, zoom the banner inside its frame and lift the logo a touch more.
+//   The hover target is the <li>, which never moves: if it were the lifted
+//   link, a pointer resting near the bottom edge would fall off it as it
+//   rises, and the card would flicker up and down.
 
 const SHOWN = 6;
-
-/** Delay between the cards as they rise in. */
-const STAGGER_MS = 60;
 
 /** The hover and focus movement inside a card. */
 const CARD_MOTION =
@@ -93,13 +93,15 @@ export async function HappeningNow() {
               {events.map((event, i) => (
                 <li
                   key={event.id}
-                  style={{ animationDelay: `${i * STAGGER_MS}ms` }}
-                  className="flex group-data-[draw=idle]/grid:opacity-0 motion-safe:group-data-[draw=done]/grid:animate-rise-in"
+                  style={{
+                    animationDelay: `calc(${i} * var(--stagger-step))`,
+                  }}
+                  className="group/card flex group-data-[draw=idle]/grid:opacity-0 motion-safe:group-data-[draw=done]/grid:animate-rise-in"
                 >
                   {/* The whole card is the link, as on /events (docs/08). */}
                   <Link
                     href={`/events/${event.id}`}
-                    className="group flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground outline-none transition-[translate,border-color] duration-(--duration-base) ease-(--ease-out-expo) hover:border-ring/70 focus-visible:border-ring/70 focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 motion-safe:focus-visible:-translate-y-1"
+                    className="group flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground outline-none transition-[translate,border-color] duration-(--duration-base) ease-(--ease-out-expo) group-hover/card:border-ring/70 focus-visible:border-ring/70 focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:group-hover/card:-translate-y-1 motion-safe:focus-visible:-translate-y-1"
                   >
                     {/* EventCardMedia's layout, composed here so the banner
                         and the logo can each move on their own. */}
@@ -111,7 +113,7 @@ export async function HappeningNow() {
                           className={cn(
                             "aspect-[5/2] md:aspect-[8/3]",
                             CARD_MOTION,
-                            "motion-safe:group-hover:scale-[1.03] motion-safe:group-focus-visible:scale-[1.03]",
+                            "motion-safe:group-hover/card:scale-[1.03] motion-safe:group-focus-visible:scale-[1.03]",
                           )}
                         />
                       </div>
@@ -120,16 +122,17 @@ export async function HappeningNow() {
                           name={event.name}
                           logoUrl={eventImageUrl(event.logoPath)}
                           size="md"
+                          decorative
                           className={cn(
                             "ring-card",
                             CARD_MOTION,
-                            "motion-safe:group-hover:-translate-y-0.5 motion-safe:group-focus-visible:-translate-y-0.5",
+                            "motion-safe:group-hover/card:-translate-y-0.5 motion-safe:group-focus-visible:-translate-y-0.5",
                           )}
                         />
                       </div>
                     </div>
                     <div className="flex flex-1 flex-col gap-3 p-5 pt-3">
-                      <h3 className="text-lg font-semibold break-words group-hover:underline group-hover:underline-offset-4">
+                      <h3 className="text-lg font-semibold break-words underline-offset-4 group-hover/card:underline group-focus-visible:underline">
                         {event.name}
                       </h3>
                       <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">

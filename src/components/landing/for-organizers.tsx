@@ -40,9 +40,6 @@ import { LandingSection } from "./section";
 // JS, without IntersectionObserver, with reduced motion or on a very short
 // screen everything is simply there.
 
-/** Delay between the table rows as they fade in. */
-const ROW_STAGGER_MS = 60;
-
 const SAMPLE_EVENT = "Silk Road Hack Week";
 
 const CRITERIA = [
@@ -136,7 +133,8 @@ export function ForOrganizers() {
               <div
                 data-draw-item
                 className={cn(
-                  "group/vignette min-w-0 motion-safe:transition-[opacity,translate] motion-safe:duration-(--duration-slow) motion-safe:ease-(--ease-out-expo)",
+                  // Transition only into "done", so hiding is instant.
+                  "group/vignette min-w-0 motion-safe:data-[draw=done]:transition-[opacity,translate] motion-safe:data-[draw=done]:duration-(--duration-slow) motion-safe:data-[draw=done]:ease-(--ease-out-expo)",
                   "data-[draw=idle]:translate-y-4 data-[draw=idle]:opacity-0 lg:data-[draw=idle]:translate-y-0",
                   i % 2 === 1
                     ? "lg:data-[draw=idle]:-translate-x-4"
@@ -229,9 +227,11 @@ function CriteriaVignette() {
     <Vignette label="Judging criteria">
       <div className="flex flex-col gap-4">
         {/* The weights as one bar: the shares of the total, at a glance.
-            It fills to 100% once, after the vignette slides in. */}
+            It fills to 100% once, after the vignette slides in. Only the
+            fill is animated: the hidden (idle) shrink applies instantly, so
+            an early reveal never starts part-full. */}
         <div className="h-2 overflow-hidden rounded-full bg-muted">
-          <div className="flex h-full origin-left group-data-[draw=idle]/vignette:scale-x-0 motion-safe:transition-[scale] motion-safe:delay-150 motion-safe:duration-(--duration-slow) motion-safe:ease-(--ease-out-expo)">
+          <div className="flex h-full origin-left group-data-[draw=idle]/vignette:scale-x-0 motion-safe:group-data-[draw=done]/vignette:transition-[scale] motion-safe:group-data-[draw=done]/vignette:delay-150 motion-safe:group-data-[draw=done]/vignette:duration-(--duration-slow) motion-safe:group-data-[draw=done]/vignette:ease-(--ease-out-expo)">
             {CRITERIA.map((c, i) => (
               <span
                 key={c.name}
@@ -361,7 +361,9 @@ function TablesVignette() {
             {TEAMS.map((team, i) => (
               <TableRow
                 key={team.name}
-                style={{ animationDelay: `${150 + i * ROW_STAGGER_MS}ms` }}
+                style={{
+                  animationDelay: `calc(150ms + ${i} * var(--stagger-step))`,
+                }}
                 className="group-data-[draw=idle]/vignette:opacity-0 motion-safe:group-data-[draw=done]/vignette:animate-fade-in"
               >
                 <TableCell className="font-medium whitespace-normal">

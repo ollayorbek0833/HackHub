@@ -44,13 +44,17 @@ const settle = (el: Locator) =>
     ).then(() => undefined),
   );
 
-async function skipWithoutCards(page: Page) {
+async function countCards(page: Page) {
   // The events stream in after the shell; wait for the skeleton to go.
   await expect(section(page, "Happening now")).toBeVisible();
   await expect(
     section(page, "Happening now").locator("[aria-busy='true']"),
   ).toHaveCount(0);
-  const count = await cardsOf(page).count();
+  return cardsOf(page).count();
+}
+
+async function skipWithoutCards(page: Page) {
+  const count = await countCards(page);
   test.skip(count === 0, "No open events in this database.");
   return count;
 }
@@ -101,6 +105,7 @@ for (const width of [390, 1440]) {
       await page.goto("/");
       const count = await skipWithoutCards(page);
       const grid = gridOf(page);
+      await expect(grid).toHaveAttribute("data-draw", "idle");
       await grid.scrollIntoViewIfNeeded();
       await expect(grid).toHaveAttribute("data-draw", "done");
       await settle(grid);
@@ -148,7 +153,49 @@ for (const width of [390, 1440]) {
       );
       await expect.poll(lifted).toBe("0px -4px");
       await expect.poll(zoom).toBe("1.03");
+      // The title underlines on focus, as on hover.
+      await expect
+        .poll(() =>
+          link
+            .getByRole("heading", { level: 3 })
+            .evaluate((el) => getComputedStyle(el).textDecorationLine),
+        )
+        .toBe("underline");
       expect(await layoutBox(next)).toEqual(before.next);
+    });
+
+    test("a pointer resting near a card's bottom edge doesn't make it flicker", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await skipWithoutCards(page);
+      const grid = gridOf(page);
+      await expect(grid).toHaveAttribute("data-draw", "idle");
+      await grid.scrollIntoViewIfNeeded();
+      await expect(grid).toHaveAttribute("data-draw", "done");
+      await settle(grid);
+
+      const card = cardsOf(page).first();
+      const link = card.getByRole("link");
+      await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      const rest = (await card.boundingBox())!;
+      const x = rest.x + rest.width / 2;
+      const y = rest.y + rest.height - 2;
+
+      // 2 px above the resting bottom edge: inside the 4 px the card lifts by,
+      // so once it rises the pointer is below the link but still on the card.
+      await page.mouse.move(x, y);
+      const lifted = () =>
+        link.evaluate((el) => getComputedStyle(el).translate);
+      await expect.poll(lifted).toBe("0px -4px");
+
+      for (const dy of [1, -1, 1, -1, 1, -1]) {
+        await page.mouse.move(x, y + dy);
+        // Longer than the transition, so a toggle would show.
+        await page.waitForTimeout(300);
+        expect(await card.evaluate((el) => el.matches(":hover"))).toBe(true);
+        expect(await lifted()).toBe("0px -4px");
+      }
     });
   });
 }
@@ -159,6 +206,12 @@ test("every organizer vignette and card ends up visible at 320×256", async ({
   await page.setViewportSize({ width: 320, height: 256 });
   await page.goto("/");
   await expect(vignettesOf(page)).toHaveCount(4);
+  // Wait until DrawIn has hidden what is below the fold, so each scroll
+  // below goes through the real reveal.
+  const count = await countCards(page);
+  await expect(vignettesOf(page).first()).toHaveAttribute("data-draw", "idle");
+  if (count > 0) await expect(gridOf(page)).toHaveAttribute("data-draw", "idle");
+
   for (const vignette of await vignettesOf(page).all()) {
     await vignette.scrollIntoViewIfNeeded();
     await expect(vignette).toHaveAttribute("data-draw", "done");
@@ -176,7 +229,7 @@ test("every organizer vignette and card ends up visible at 320×256", async ({
     expect(await opacity(row)).toBe("1");
   }
 
-  const count = await skipWithoutCards(page);
+  if (count === 0) return;
   const grid = gridOf(page);
   await cardsOf(page).first().scrollIntoViewIfNeeded();
   await expect(grid).toHaveAttribute("data-draw", "done");

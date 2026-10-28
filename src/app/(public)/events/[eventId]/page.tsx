@@ -101,6 +101,7 @@ async function EventDetails({
         resultsPublished: true,
         logoPath: true,
         bannerPath: true,
+        createdById: true,
         criteria: {
           select: { id: true, name: true, weightPercent: true, maxScore: true },
           orderBy: [{ weightPercent: "desc" }, { createdAt: "asc" }],
@@ -129,6 +130,9 @@ async function EventDetails({
     <PrimaryAction
       event={event}
       role={user?.role ?? null}
+      managesEvent={
+        user?.role === "ORGANIZER" && user.id === event.createdById
+      }
       participant={participant}
     />
   );
@@ -395,6 +399,7 @@ const BIG = "h-11 w-full px-6 text-base";
 function PrimaryAction({
   event,
   role,
+  managesEvent,
   participant,
 }: {
   event: {
@@ -404,15 +409,28 @@ function PrimaryAction({
     resultsPublished: boolean;
   };
   role: Role | null;
+  /** The viewer is the organizer who created this event. */
+  managesEvent: boolean;
   participant: ParticipantState | null;
 }): ReactNode {
   const teamHref = `/events/${event.id}/team`;
 
-  if (role === "ORGANIZER") {
+  // Only the organizer who created the event manages it from here.
+  if (managesEvent) {
     return (
       <Button asChild size="lg" className={BIG}>
         <Link href={`/organizer/events/${event.id}`}>Manage event</Link>
       </Button>
+    );
+  }
+
+  // Any other organizer is a visitor here, and organizers can't register.
+  if (role === "ORGANIZER") {
+    return (
+      <p className="flex items-start gap-2 text-sm text-muted-foreground">
+        <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+        Organizers don&apos;t register for events.
+      </p>
     );
   }
 

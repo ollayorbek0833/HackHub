@@ -100,8 +100,9 @@ const QUESTIONS: { q: string; a: ReactNode }[] = [
     a: (
       <p>
         On our own server, behind Cloudflare. Passwords are stored only as
-        bcrypt hashes, your phone number is shown only to you and organizers,
-        and there are no ads or tracking cookies. The details are on the{" "}
+        bcrypt hashes, your phone number is shown only to you and the
+        organizers of events you register for, and there are no ads or
+        tracking cookies. The details are on the{" "}
         <A href="/privacy">Privacy</A> page.
       </p>
     ),

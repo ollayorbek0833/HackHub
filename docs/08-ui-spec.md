@@ -192,7 +192,8 @@ show under the field. Errors that aren't about one field show above the form.
 | Participant, registered | **(frame)** "You're registered" (success status), plus "Create or join a team" or "Go to my team" → `/events/[eventId]/team` |
 | Not registered, registration closed | **(frame)** Disabled "Registration closed" and the line "Registration for this event is closed." (TC-38, TC-43) |
 | Judge | No register button. Judges can't be on teams (**Decision 11**) |
-| Organizer | "Manage event" → `/organizer/events/[eventId]` |
+| Organizer who created the event | "Manage event" → `/organizer/events/[eventId]` |
+| Any other organizer | No register button and no "Manage event". Instead: "Organizers don't register for events." |
 
 - **After "Register".** Stays on the page, the button becomes the registered state, toast "You're registered for {event name}." If the server says it's a duplicate (TC-39): "You're already registered for this event." If it closed in the meantime: "Registration for this event is closed."
 - **Ranking section.** Only when results are published (**(frame)**). Columns: rank, team name, members, total (0–100).
@@ -236,7 +237,7 @@ show under the field. Errors that aren't about one field show above the form.
 
 - **Purpose.** Read-only view of another user, reached from team member lists and the ranking.
 - **Who.** Any signed-in user (**Decision 12**).
-- **Data.** Name, faculty, role, skills, bio, links (open in a new tab), phone (a `tel:` link, shown as `+998 90 123 45 67`), only to organizers and to the person themselves; anyone else sees no phone line at all, and it's hidden when not given. The email isn't shown.
+- **Data.** Name, faculty, role, skills, bio, links (open in a new tab), phone (a `tel:` link, shown as `+998 90 123 45 67`), only to the person themselves and to the organizers of events they registered for (an organizer who created at least one of them); anyone else, other organizers included, sees no phone line at all, and it's hidden when not given. The email isn't shown.
 - **States.** Profile not filled in yet: "This person hasn't filled in their profile yet." Viewing your own: a link "Edit my profile" → `/profile`.
 - **Tests.** TC-12.
 

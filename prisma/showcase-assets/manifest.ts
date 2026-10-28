@@ -25,6 +25,16 @@ export function showcaseImagePath(
   return `events/${eventId}/${kind}-${hex}.webp`;
 }
 
+/**
+ * Whether a stored file was written by showcaseImagePath (from any version of
+ * the assets): its name's hex is the hash of its own bytes. An organizer's
+ * upload has a random hex, so it's false for those.
+ */
+export function isShowcaseImagePath(relative: string, bytes: Uint8Array): boolean {
+  const hex = /-([0-9a-f]{16})\.webp$/.exec(relative)?.[1];
+  return hex !== undefined && hex === createHash("sha256").update(bytes).digest("hex").slice(0, 16);
+}
+
 /** "Payments Weekend Bukhara" → "payments-weekend-bukhara". */
 export function assetSlug(name: string): string {
   return name
@@ -83,7 +93,7 @@ const page = (id: string) => `https://unsplash.com/photos/${id}`;
 export const SHOWCASE_ASSETS: ShowcaseAsset[] = [
   // Anvar Jalilov
   { name: "Uzbek Language AI Hackathon", logo: { monogram: "UZ", icon: "Languages", style: 0 }, banner: { photo: "1485827404703-89b55fcc595e", page: page("2EJCSULRwC8"), photographer: "Alex Knight", focus: { y: 0.3 } } },
-  { name: "Silk Road Indie Game Jam", logo: { monogram: "SR", icon: "Swords", style: 1 }, banner: { photo: "1786919095165-ccae4671c820", page: page("SwMvGB_5nk4"), photographer: "Branden Skeli" } },
+  { name: "Silk Road Indie Game Jam", logo: { monogram: "SR", icon: "Swords", style: 1 }, banner: { photo: "1772235231771-f17980e811e4", page: page("xeCywSyt8Zc"), photographer: "Abdullahi Mohamud" } },
   { name: "Women in Tech Hackathon", logo: { monogram: "WiT", icon: "Rocket", style: 2 }, banner: { photo: "1531535701800-03b2bec4fbfd", page: page("GXEcTqlZHno"), photographer: "Mimi Thian", focus: { y: 0.15 } } },
   { name: "Payments Weekend Bukhara", logo: { monogram: "PW", icon: "Wallet", style: 3 }, banner: { photo: "1673446840855-1c82bafdb67d", page: page("e2uaQCdKOFw"), photographer: "Evgeny Matveev" } },
   { name: "Student Security Cup", logo: { monogram: "SSC", icon: "KeyRound", style: 4 }, banner: { photo: "1629904853893-c2c8981a1dc5", page: page("Im_cQ6hQo10"), photographer: "Compagnons" } },
@@ -94,7 +104,7 @@ export const SHOWCASE_ASSETS: ShowcaseAsset[] = [
   { name: "Green Bukhara Hack", logo: { monogram: "GB", icon: "Leaf", style: 9 }, banner: { photo: "1603221197221-e9b151b5c83e", page: page("8DNT35WI090"), photographer: "Abdy Ta" } },
 
   // Bahodir Rahimov
-  { name: "Tashkent Mobility Hack", logo: { monogram: "TM", icon: "Route", style: 3 }, banner: { photo: "1646916777029-973d54bcbccc", page: page("19QN4KCcyto"), photographer: "Sultonbek Ikromov" } },
+  { name: "Tashkent Mobility Hack", logo: { monogram: "TM", icon: "Route", style: 3 }, banner: { photo: "1552650302-9d5005723088", page: page("nqdg17euDUQ"), photographer: "Safar Safarov" } },
   { name: "Bukhara CTF Night", logo: { monogram: "BN", icon: "Bug", style: 4 }, banner: { photo: "1791436446233-4c2e4577943a", page: page("HVNlfgV9Gqs"), photographer: "Bernd Dittrich" } },
   { name: "Microfinance for Mahallas", logo: { monogram: "MF", icon: "Coins", style: 5 }, banner: { photo: "1743414254935-4c374bfacb2c", page: page("cXpgjQeKfdQ"), photographer: "Dasha Novikova" } },
   { name: "Farm to Market Hackathon", logo: { monogram: "FM", icon: "Wheat", style: 6 }, banner: { photo: "1743414249042-f42a264aebd6", page: page("OF1wKlB--OU"), photographer: "Dasha Novikova" } },
@@ -108,7 +118,7 @@ export const SHOWCASE_ASSETS: ShowcaseAsset[] = [
   // Farrukh Obidov
   { name: "GovTech Challenge Tashkent", logo: { monogram: "GT", icon: "Building2", style: 6 }, banner: { photo: "1622021109028-8ba1d5374161", page: page("hDO53B4wFWU"), photographer: "Far Chinberdiev" } },
   { name: "Mobile Games Weekend", logo: { monogram: "MG", icon: "Smartphone", style: 7 }, banner: { photo: "1784969293884-8d3afcff1a13", page: page("3Z-rn9SCaQM"), photographer: "Amanz" } },
-  { name: "Samarkand EdTech Weekend", logo: { monogram: "SE", icon: "BookOpen", style: 8 }, banner: { photo: "1728565721640-117dd6969a17", page: page("5OZy4VAP2Mg"), photographer: "Aleksander Stypczynski" } },
+  { name: "Samarkand EdTech Weekend", logo: { monogram: "SE", icon: "BookOpen", style: 8 }, banner: { photo: "1561089489-f13d5e730d72", page: page("Z-fq3wBVfMU"), photographer: "Shubham Sharan" } },
   { name: "Digital Mahalla Hackathon", logo: { monogram: "DM", icon: "Users", style: 9 }, banner: { photo: "1680789337218-aea1b03ccc41", page: page("eK7Q7phvASI"), photographer: "Sarvar Samigov" } },
   { name: "Aral Sea Data Challenge", logo: { monogram: "AS", icon: "Waves", style: 0 }, banner: { photo: "1606771090633-66bf56fb13fb", page: page("uQNIhOT-WBA"), photographer: "Artem Asset", focus: { y: 0.15 } } },
   { name: "AgriTech Hack Samarkand", logo: { monogram: "AG", icon: "Tractor", style: 1 }, banner: { photo: "1717702576954-c07131c54169", page: page("_dnc3j1oVlk"), photographer: "Tom De Decker" } },
@@ -121,9 +131,9 @@ export const SHOWCASE_ASSETS: ShowcaseAsset[] = [
   { name: "Accessibility Hack", logo: { monogram: "AX", icon: "Accessibility", style: 9 }, banner: { photo: "1764006145420-df3006edf060", page: page("XjoI1OjweWo"), photographer: "Jose Manuel Esp" } },
   { name: "Social Impact Hackathon", logo: { monogram: "SI", icon: "HeartHandshake", style: 0 }, banner: { photo: "1652971876875-05db98fab376", page: page("CxL29J-aM5E"), photographer: "Joe Whalen" } },
   { name: "Heritage Tech Jam Bukhara", logo: { monogram: "HJ", icon: "Castle", style: 1 }, banner: { photo: "1694782540764-7dd31798823f", page: page("dVpjB9kZMKM"), photographer: "Max Tcvetkov" } },
-  { name: "Small Business Digital Week", logo: { monogram: "SB", icon: "Store", style: 2 }, banner: { photo: "1778790677564-0f9401aac4f7", page: page("QzPNnCy_46g"), photographer: "SpotOn" } },
+  { name: "Small Business Digital Week", logo: { monogram: "SB", icon: "Store", style: 2 }, banner: { photo: "1770013413878-2530e2c3d82b", page: page("k63Or81F8-M"), photographer: "Rifki Kurniawan", focus: { y: 0.25 } } },
   { name: "Smart Home Challenge", logo: { monogram: "SH", icon: "HouseWifi", style: 3 }, banner: { photo: "1757524492552-d47a66a2b63e", page: page("cUoXTLVFQ9M"), photographer: "Michael Brown" } },
-  { name: "Bukhara Smart City Challenge", logo: { monogram: "BSC", icon: "MapPin", style: 4 }, banner: { photo: "1774851406797-cd9ace6d6d6a", page: page("lP8nzEyxdWU"), photographer: "kai muro" } },
+  { name: "Bukhara Smart City Challenge", logo: { monogram: "BSC", icon: "MapPin", style: 4 }, banner: { photo: "1670514535515-e7af911bdadb", page: page("2_wymUghgr8"), photographer: "Evgeny Matveev" } },
   { name: "Computer Vision Cup", logo: { monogram: "CV", icon: "ScanEye", style: 5 }, banner: { photo: "1786539861520-6e91dc64a958", page: page("66VbdwUpmA8"), photographer: "Enchanted Tools" } },
   { name: "IoT Makers Weekend", logo: { monogram: "IoT", icon: "Cpu", style: 6 }, banner: { photo: "1555664424-778a1e5e1b48", page: page("zP7X_B86xOg"), photographer: "Robin Glauser" } },
   { name: "Silk Road Tourism Hackathon", logo: { monogram: "SRT", icon: "Map", style: 7 }, banner: { photo: "1787472259709-faa92e5b3d69", page: page("eUNQAwfKi3Y"), photographer: "Hao Wu" } },
@@ -137,7 +147,7 @@ export const SHOWCASE_ASSETS: ShowcaseAsset[] = [
   { name: "Smart Irrigation Challenge", logo: { monogram: "IR", icon: "Droplets", style: 6 }, banner: { photo: "1692369584496-3216a88f94c1", page: page("6DMht7wYt6g"), photographer: "Lumin Osity" } },
   { name: "Hardware Hack Samarkand", logo: { monogram: "HW", icon: "CircuitBoard", style: 7 }, banner: { photo: "1649959265391-8a1de884248a", page: page("0iRfjG7IGeo"), photographer: "Vishnu Mohanan" } },
   { name: "Generative AI for Business", logo: { monogram: "GAI", icon: "Bot", style: 8 }, banner: { photo: "1542744173-8e7e53415bb0", page: page("gMsnXqILjp4"), photographer: "Campaign Creators" } },
-  { name: "Open Banking Hack", logo: { monogram: "OB", icon: "Landmark", style: 9 }, banner: { photo: "1772734645633-5bfbbb87da88", page: page("Iingrw2ZVYs"), photographer: "Vagaro" } },
+  { name: "Open Banking Hack", logo: { monogram: "OB", icon: "Landmark", style: 9 }, banner: { photo: "1628527304948-06157ee3c8a6", page: page("HNPrWOH2Z8U"), photographer: "Towfiqu barbhuiya", focus: { y: 0.3 } } },
   { name: "EdTech Build Week", logo: { monogram: "EB", icon: "GraduationCap", style: 0 }, banner: { photo: "1758270705290-62b6294dd044", page: page("kp7qkHTgSKc"), photographer: "Vitaly Gariev", focus: { y: 0.3 } } },
   { name: "HealthTech Hackathon Tashkent", logo: { monogram: "HT", icon: "HeartPulse", style: 1 }, banner: { photo: "1758691462878-6edc3d3da1be", page: page("iyeUwItlIPk"), photographer: "Vitaly Gariev" } },
 ];

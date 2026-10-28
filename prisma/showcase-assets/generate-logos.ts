@@ -24,28 +24,32 @@ import { assetSlug, type LogoIcon, SHOWCASE_ASSETS } from "./manifest";
 const SIZE = 512;
 const FONT = "Space Grotesk";
 
-// DESIGN.md > Theme: Scoreboard.
+// DESIGN.md > Theme: Scoreboard. Only the event-art hues (amber, ember, warm
+// gold, deep brown) and the neutral ground, surface and text: the live red is
+// reserved for live moments, so no logo uses it.
 const C = {
   ground: "#0C0A08",
   surface: "#19150F",
   text: "#FFF4E0",
   amber: "#FFA41B",
   onAmber: "#1A0E00",
-  live: "#FF3D2E",
-  accent: "#3A1A12",
   ember: "#FF6A1F",
   gold: "#E8B44A",
   brown: "#5A3A1C",
 } as const;
 
-type Layout = "stack" | "badge" | "watermark" | "split";
+/**
+ * Where the icon and monogram sit. The whole icon is always inside the tile
+ * and clear of the letters, so it still reads as an icon at 24–40 px.
+ */
+type Layout = "stack" | "badge" | "split" | "ring";
 type Style = {
   /** SVG paint servers for the tile, drawn in order. */
   background: string;
   icon: string;
   text: string;
   layout: Layout;
-  /** badge: the disc behind the icon. */
+  /** badge: the disc behind the icon. ring: the circle's stroke. */
   disc?: string;
 };
 
@@ -61,32 +65,31 @@ export const STYLES: Style[] = [
   { background: linear("g", C.surface, C.ground) + glow("h", C.amber, 0.5, 0.25, 0.16), icon: C.amber, text: C.text, layout: "stack" },
   // 2 ember to amber, dark disc
   { background: linear("g", C.ember, C.amber, 1, 0.6), icon: C.amber, text: C.onAmber, layout: "badge", disc: C.onAmber },
-  // 3 deep brown, gold watermark
-  { background: linear("g", C.brown, "#24160A"), icon: C.gold, text: C.text, layout: "watermark" },
+  // 3 deep brown, gold icon top right
+  { background: linear("g", C.brown, "#24160A"), icon: C.gold, text: C.text, layout: "split" },
   // 4 cream tile, ember icon
   { background: linear("g", C.text, "#F1DCB6"), icon: C.ember, text: C.brown, layout: "stack" },
   // 5 warm gold, icon top right
   { background: linear("g", C.gold, C.amber, 0.4, 1), icon: C.onAmber, text: C.onAmber, layout: "split" },
   // 6 dark ground with an ember glow, ember disc
   { background: linear("g", C.surface, C.ground) + glow("h", C.ember, 0.95, 0.95, 0.45), icon: C.onAmber, text: C.text, layout: "badge", disc: C.ember },
-  // 7 low-strength accent, live red icon
-  { background: linear("g", C.accent, "#170A06") + glow("h", C.live, 0.85, 0.1, 0.28), icon: C.live, text: C.text, layout: "split" },
-  // 8 dark ground, amber monogram over an amber watermark
-  { background: linear("g", C.ground, C.surface, 0, 1), icon: C.amber, text: C.amber, layout: "watermark" },
+  // 7 ember fading down into deep brown, dark ring
+  { background: linear("g", C.ember, "#3B220E", 0, 1), icon: C.onAmber, text: C.text, layout: "ring", disc: C.onAmber },
+  // 8 dark ground, amber ring and amber monogram
+  { background: linear("g", C.ground, C.surface, 0, 1) + glow("h", C.amber, 0.5, 0.3, 0.12), icon: C.amber, text: C.amber, layout: "ring", disc: C.amber },
   // 9 brown, amber disc, gold monogram
   { background: linear("g", "#4A2F16", "#2B1A0B") + glow("h", C.gold, 0.15, 0.1, 0.18), icon: C.onAmber, text: C.gold, layout: "badge", disc: C.amber },
 ];
 
 /** A Lucide icon as an <svg> placed at x, y and drawn size × size. */
-function icon(name: LogoIcon, x: number, y: number, size: number, color: string, opacity = 1) {
+function icon(name: LogoIcon, x: number, y: number, size: number, color: string) {
   const Icon = (icons as unknown as Record<string, ComponentType<Record<string, unknown>>>)[name];
   if (!Icon) throw new Error(`lucide-react has no icon "${name}"`);
-  // Thinner strokes on big watermarks, a touch heavier on small marks.
-  const strokeWidth = size > 300 ? 1.5 : 2.1;
-  const markup = renderToStaticMarkup(createElement(Icon, { size: 24, color, strokeWidth }));
+  // A touch heavier than Lucide's 2, so the marks hold up at small sizes.
+  const markup = renderToStaticMarkup(createElement(Icon, { size: 24, color, strokeWidth: 2.1 }));
   return markup.replace(
     /^<svg([^>]*?) width="24" height="24"/,
-    `<svg$1 x="${x}" y="${y}" width="${size}" height="${size}" opacity="${opacity}"`,
+    `<svg$1 x="${x}" y="${y}" width="${size}" height="${size}"`,
   );
 }
 
@@ -110,10 +113,11 @@ export function logoSvg(monogram: string, iconName: LogoIcon, style: Style): str
         text(monogram, 50, 450, long ? 158 : 206, style.text, "start");
       break;
     }
-    case "watermark": {
-      const size = long ? 168 : 216;
-      // Mostly off the bottom-right edge, so it frames the monogram rather than crossing it.
-      body = icon(iconName, 230, 230, 440, style.icon, 0.16) + text(monogram, SIZE / 2, SIZE / 2 + size * 0.36, size, style.text, "middle");
+    case "ring": {
+      body =
+        `<circle cx="256" cy="168" r="104" fill="none" stroke="${style.disc}" stroke-width="13"/>` +
+        icon(iconName, 196, 108, 120, style.icon) +
+        text(monogram, SIZE / 2, 448, long ? 120 : 140, style.text, "middle");
       break;
     }
     case "split": {
@@ -157,7 +161,10 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Only when run as a script: the unit tests import STYLES and logoSvg.
+if (typeof require !== "undefined" && require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

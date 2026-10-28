@@ -5,8 +5,10 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 import { EVENTS } from "../../../prisma/seed-showcase-data";
+import { logoSvg, STYLES } from "../../../prisma/showcase-assets/generate-logos";
 import {
   assetSlug,
+  isShowcaseImagePath,
   SHOWCASE_ASSETS,
   showcaseImagePath,
 } from "../../../prisma/showcase-assets/manifest";
@@ -36,6 +38,24 @@ describe("showcase assets", () => {
     for (let i = 0; i < SHOWCASE_ASSETS.length; i += 10) {
       const styles = SHOWCASE_ASSETS.slice(i, i + 10).map((a) => a.logo.style);
       expect(new Set(styles).size).toBe(10);
+    }
+  });
+
+  it("draws every logo icon whole, inside the tile, in event-art colours only", () => {
+    for (const a of SHOWCASE_ASSETS) {
+      const svg = logoSvg(a.logo.monogram, a.logo.icon, STYLES[a.logo.style]);
+      // DESIGN.md keeps the live red for live moments.
+      expect(svg.toUpperCase()).not.toContain("#FF3D2E");
+      const boxes = [...svg.matchAll(/<svg[^>]* x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)];
+      expect(boxes).toHaveLength(1);
+      for (const [, x, y, w, h] of boxes) {
+        expect(Number(x)).toBeGreaterThanOrEqual(0);
+        expect(Number(y)).toBeGreaterThanOrEqual(0);
+        expect(Number(x) + Number(w)).toBeLessThanOrEqual(512);
+        expect(Number(y) + Number(h)).toBeLessThanOrEqual(512);
+      }
+      // Drawn at full strength, not as a faint fragment.
+      expect(svg).not.toMatch(/<svg[^>]* x="[^>]*opacity=/);
     }
   });
 
@@ -86,5 +106,13 @@ describe("showcaseImagePath", () => {
     expect(resolveUploadPath("/srv/uploads", relative)).toBe(
       `/srv/uploads/${relative}`,
     );
+  });
+
+  it("tells a showcase file from an organizer's upload by its name", () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    expect(isShowcaseImagePath(showcaseImagePath("e1", "banner", bytes), bytes)).toBe(true);
+    // An upload's name has a random hex (storage.ts).
+    expect(isShowcaseImagePath("events/e1/banner-0123456789abcdef.webp", bytes)).toBe(false);
+    expect(isShowcaseImagePath("events/e1/banner.webp", bytes)).toBe(false);
   });
 });

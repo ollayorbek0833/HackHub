@@ -68,6 +68,94 @@ for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 });
     });
 
+    test("scrolling in slowly, a total never shows its final value early and never drops", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await ready(page);
+      for (const card of await cards(page).all()) {
+        await expect(card).toHaveAttribute("data-draw", "idle");
+      }
+
+      // Start just above the section, then sample every frame: each card's
+      // shown total and how much of its track its bar fills.
+      await page.evaluate(() => {
+        const section = document.querySelector("#fair-judging")!;
+        scrollTo(
+          0,
+          scrollY + section.getBoundingClientRect().top - innerHeight,
+        );
+        type Sample = { at: number; text: string; fill: number };
+        const log: Sample[][] = [];
+        (window as unknown as { log: Sample[][] }).log = log;
+        const cardEls = [
+          ...document.querySelectorAll<HTMLElement>("#fair-judging ol > li"),
+        ];
+        const frame = (at: number) => {
+          log.push(
+            cardEls.map((card) => {
+              const fill = card.querySelector("[data-points-fill]")!;
+              return {
+                at,
+                text:
+                  card.querySelector("[data-total] [aria-hidden]")
+                    ?.textContent ?? "",
+                fill:
+                  fill.getBoundingClientRect().width /
+                  fill.parentElement!.getBoundingClientRect().width,
+              };
+            }),
+          );
+          requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      });
+
+      // A slow wheel, 40 px a step, until every card has been revealed.
+      for (let step = 0; step < 200; step++) {
+        const done = await page.$$eval("#fair-judging ol > li", (els) =>
+          els.every((el) => el.dataset.draw === "done"),
+        );
+        if (done) break;
+        await page.mouse.wheel(0, 40);
+        await page.waitForTimeout(30);
+      }
+      await expect.poll(() => shownTotals(page)).toEqual(TOTALS);
+      await expect.poll(() => barFill(page)).toEqual(TOTALS.map(Number));
+
+      const log = await page.evaluate(
+        () =>
+          (
+            window as unknown as {
+              log: { at: number; text: string; fill: number }[][];
+            }
+          ).log,
+      );
+      TOTALS.forEach((final, c) => {
+        const samples = log.map((frame) => frame[c]);
+        for (let i = 1; i < samples.length; i++) {
+          // Never drops.
+          expect(
+            Number(samples[i].text),
+            `team ${c + 1}: ${samples
+              .slice(Math.max(0, i - 3), i + 1)
+              .map((s) => s.text)
+              .join(" → ")}`,
+          ).toBeGreaterThanOrEqual(Number(samples[i - 1].text));
+        }
+        // Never the final value while the bar hasn't started.
+        for (const s of samples.filter((s) => s.fill === 0)) {
+          expect(s.text).not.toBe(final);
+          expect(s.text).toBe("0.0");
+        }
+        // The number and its bar start together (within a few frames).
+        const textStart = samples.find((s) => Number(s.text) > 0)!.at;
+        const barStart = samples.find((s) => s.fill > 0)!.at;
+        expect(Math.abs(textStart - barStart)).toBeLessThan(100);
+        expect(samples.at(-1)!.text).toBe(final);
+      });
+    });
+
     test("the totals count up once to rankTeams' values and the bars fill", async ({
       page,
     }) => {

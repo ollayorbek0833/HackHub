@@ -28,7 +28,9 @@
     transition-delay: calc(var(--i, 0) * 2 * var(--stagger-step));
   }
 
-  /* Each team's points bar fills from 0 to its total. */
+  /* Each team's points bar fills from 0 to its total. The total (Total in
+     fair-judging.tsx) reads this transition's delay and duration, so the
+     number counts up in step with its bar. */
   .card[data-draw="idle"] .fill {
     transform: scaleX(0);
   }

@@ -1,9 +1,8 @@
 "use client";
 
 import { CalculatorIcon, ScaleIcon, TrophyIcon, UsersIcon } from "lucide-react";
-import { useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
-import { CountUp } from "@/components/feedback/count-up";
 import { DrawIn } from "@/components/landing/draw-in";
 import { LandingSection } from "@/components/landing/section";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +24,11 @@ import styles from "./fair-judging.module.css";
 // landing page can't drift from how a real ranking is computed.
 //
 // Motion, once, as the example scrolls into view, and only with motion allowed:
-// the three points rise in; each team's total counts up (CountUp) and its
-// points bar fills, team after team in rank order; the leader's rank glows
+// the three points rise in; each team's points bar fills and its total counts
+// up with it (Total), team after team in rank order; the leader's rank glows
 // amber once. The server renders every final value and every full bar, so the
 // section is complete without JavaScript, without IntersectionObserver and
-// with reduced motion (see fair-judging.module.css, DrawIn and CountUp).
+// with reduced motion (see fair-judging.module.css, DrawIn and Total).
 
 type ExampleCriterion = RankCriterion & { name: string };
 type ExampleTeam = RankTeam & { name: string };
@@ -148,35 +147,89 @@ const LAST = "pr-3 sm:pr-4";
 const CELL = "py-2 pl-2 text-right whitespace-nowrap sm:pl-3";
 /** A judge's column: centred under its header, so it never crowds "Avg". */
 const JUDGE_CELL = "py-2 pl-2 text-center whitespace-nowrap sm:pl-3";
-/** One amber step per criterion, in CRITERIA order: its share of the bar. */
-const SEGMENT = ["bg-primary", "bg-primary/60", "bg-primary/30"];
-const segment = (k: number) => SEGMENT[k % SEGMENT.length];
-
 /** The stagger position, read by fair-judging.module.css. */
 const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
 
-const subscribeNever = () => () => {};
-/** CountUp needs IntersectionObserver; without it the total stays static. */
-function useCanCount() {
-  return useSyncExternalStore(
-    subscribeNever,
-    () => typeof IntersectionObserver !== "undefined",
-    () => false,
-  );
-}
-
-/** A team's total: counts up once in view and always ends on the exact value. */
+/**
+ * A team's total. It counts up with its card's points bar, frame by frame,
+ * so the number and the bar start and land together. Nothing starts it but
+ * its card's DrawIn reveal:
+ * - When DrawIn holds the card back (idle: below the fold, motion allowed),
+ *   it shows 0.0, the same as the empty bar.
+ * - When the card is revealed (done), each frame it shows the value times how
+ *   far the bar has filled (its rendered scale, from the transition in
+ *   fair-judging.module.css), so it only goes up and lands exactly on the
+ *   value when the bar is full.
+ * - Otherwise (no JavaScript, no IntersectionObserver, reduced motion, or the
+ *   card on screen at load) DrawIn never holds the card back, so it shows the
+ *   final value and never moves. It never shows the final value first and then
+ *   drops.
+ * Screen readers only ever get the final value.
+ */
 function Total({ value }: { value: number }) {
-  const canCount = useCanCount();
-  return canCount ? (
-    <CountUp value={value} decimals={1} />
-  ) : (
-    <>{oneDecimal(value)}</>
+  const ref = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState(value);
+
+  useEffect(() => {
+    // This runs before DrawIn's effect (children first), so it sees "idle".
+    const card = ref.current?.closest<HTMLElement>("[data-draw-item]");
+    const fill = card?.querySelector<HTMLElement>("[data-points-fill]");
+    if (!card || !fill) return;
+
+    let held = false;
+    let frame = 0;
+    /** How far the bar has filled, 0–1 (its scaleX; "none" once full). */
+    const filled = () => {
+      const transform = getComputedStyle(fill).transform;
+      if (transform === "none") return 1;
+      return Math.min(1, Math.max(0, new DOMMatrixReadOnly(transform).a));
+    };
+    const count = () => {
+      const share = filled();
+      setShown(share < 1 ? value * share : value);
+      if (share < 1) frame = requestAnimationFrame(count);
+    };
+
+    const observer = new MutationObserver(() => {
+      const state = card.dataset.draw;
+      if (state === "idle") {
+        held = true;
+        setShown(0);
+      } else if (state === "done" && held) {
+        observer.disconnect();
+        frame = requestAnimationFrame(count);
+      }
+    });
+    observer.observe(card, {
+      attributes: true,
+      attributeFilter: ["data-draw"],
+    });
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [value]);
+
+  return (
+    <span ref={ref}>
+      <span aria-hidden>{oneDecimal(shown)}</span>
+      {/* Not selectable, so copying the card gives the number once. */}
+      <span className="sr-only select-none">{oneDecimal(value)}</span>
+    </span>
   );
 }
 
-/** The total out of 100 as a bar, one segment per criterion's points. */
+/**
+ * The total out of 100 as a bar, split into each criterion's points in table
+ * order, with a gap between them. DESIGN.md > Ranking (the fixed ramp): only
+ * the leader is full-strength amber; ranks 2 and below are amber at 70%. Both
+ * are at least 3:1 against the track (5.7:1 and 4.2:1), and the gaps show the
+ * track, so each segment stands apart. One colour per bar, not one per
+ * criterion: amber only clears 3:1 on the track from about 60% up, too narrow
+ * for three steps anyone could tell apart.
+ */
 function PointsBar({ entry }: { entry: FairJudgingTeam }) {
+  const leader = entry.rank === 1;
   return (
     <div
       aria-hidden
@@ -184,13 +237,13 @@ function PointsBar({ entry }: { entry: FairJudgingTeam }) {
     >
       <div
         data-points-fill
-        className={cn(styles.fill, "flex h-full gap-px")}
+        className={cn(styles.fill, "flex h-full gap-0.5")}
         style={{ width: `${entry.total}%` }}
       >
-        {entry.rows.map((row, k) => (
+        {entry.rows.map((row) => (
           <span
             key={row.criterion.id}
-            className={cn("h-full", segment(k))}
+            className={cn("h-full", leader ? "bg-primary" : "bg-primary/70")}
             style={{ flex: `${row.points} 1 0` }}
           />
         ))}
@@ -295,7 +348,7 @@ function TeamCard({
           </tr>
         </thead>
         <tbody>
-          {entry.rows.map((row, k) => (
+          {entry.rows.map((row) => (
             <tr key={row.criterion.id} className="border-t">
               <th
                 scope="row"
@@ -304,17 +357,7 @@ function TeamCard({
                 <span className="block break-words text-foreground">
                   {row.criterion.name}
                 </span>
-                <span
-                  className={cn(
-                    "flex items-center gap-1.5 text-muted-foreground",
-                    NUM,
-                  )}
-                >
-                  {/* This criterion's segment in the points bar above. */}
-                  <span
-                    aria-hidden
-                    className={cn("size-2 shrink-0 rounded-[2px]", segment(k))}
-                  />
+                <span className={cn("block text-muted-foreground", NUM)}>
                   {row.criterion.weightPercent}%
                 </span>
               </th>
@@ -395,7 +438,8 @@ export function FairJudging() {
               <span className={NUM}>{c.weightPercent}%</span>
             </span>
           ))}
-          . Two judges (J1 and J2) score three teams.
+          . Two judges (J1 and J2) score three teams. The bar under each total
+          splits it into each criterion&apos;s points, in table order.
         </p>
 
         <div className="mt-4 rounded-lg bg-muted px-4 py-3">

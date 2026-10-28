@@ -66,11 +66,14 @@ export const viewport: Viewport = {
 
 // Dark only (DESIGN.md: the Scoreboard theme has no light mode). The theme
 // tokens live in globals.css; `dark` on <html> turns on the dark: variants the
-// shadcn components use.
+// shadcn components use. data-scroll-behavior="smooth" tells Next.js to jump,
+// not glide, on route changes; the landing page's in-page anchors glide
+// (SmoothAnchors, globals.css, motion-safe only).
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`dark ${spaceGrotesk.variable} ${geistMono.variable} ${unbounded.variable}`}
     >
       <body className="bg-background text-foreground font-sans antialiased">

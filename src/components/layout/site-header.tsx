@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { MobileNav } from "./mobile-nav";
 import { getNavItems, ROLE_LABEL } from "./nav-items";
 import { NavLinks } from "./nav-links";
+import { SectionNav } from "./section-nav";
 import { UserMenu } from "./user-menu";
 
 function Logo() {
@@ -56,10 +57,12 @@ export async function SiteHeader() {
   return (
     <header className={HEADER_CLASS}>
       <div className={INNER_CLASS}>
-        <div className="flex items-center gap-6">
+        <div className="flex min-w-0 items-center gap-6">
           <Logo />
-          <div className="hidden md:block">
+          <div className="hidden items-center gap-1 md:flex">
             <NavLinks items={items} />
+            {/* Visitors: quick links to the landing page's sections. */}
+            {!account && <SectionNav />}
           </div>
         </div>
 
@@ -82,7 +85,7 @@ export async function SiteHeader() {
           )}
         </div>
 
-        <MobileNav items={items} user={account} />
+        <MobileNav items={items} user={account} sections={!account} />
       </div>
     </header>
   );

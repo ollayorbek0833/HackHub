@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { getActiveHref, getNavItems, getTabItems } from "./nav-items";
+import {
+  getActiveHref,
+  getNavItems,
+  getTabItems,
+  PAGE_SECTIONS,
+  pickActiveSection,
+  sectionHref,
+} from "./nav-items";
 
 describe("getNavItems", () => {
-  it("gives a visitor only Events", () => {
-    expect(getNavItems(null).map((i) => i.href)).toEqual(["/events"]);
+  it("gives a visitor only All events", () => {
+    expect(getNavItems(null)).toEqual([
+      { label: "All events", href: "/events" },
+    ]);
   });
 
   it("matches the docs/08 App shell table for each role", () => {
@@ -98,5 +107,38 @@ describe("getTabItems", () => {
       "Events",
     ]);
     expect(current("ORGANIZER", "/organizer/users")).toEqual(["Users"]);
+  });
+});
+
+describe("page sections", () => {
+  it("links the five landing sections, with no label twice in the visitor header", () => {
+    expect(PAGE_SECTIONS.map((s) => s.id)).toEqual([
+      "how-it-works",
+      "for-organizers",
+      "fair-judging",
+      "happening-now",
+      "faq",
+    ]);
+    const labels = [
+      ...getNavItems(null).map((i) => i.label),
+      ...PAGE_SECTIONS.map((s) => s.label),
+    ];
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it("is an in-page anchor on the landing page and a link to it elsewhere", () => {
+    expect(sectionHref("faq", "/")).toBe("#faq");
+    expect(sectionHref("faq", "/about")).toBe("/#faq");
+    expect(sectionHref("faq", "/events/abc")).toBe("/#faq");
+  });
+
+  it("marks the first section crossing the band, or none", () => {
+    expect(pickActiveSection(new Set())).toBeNull();
+    expect(pickActiveSection(new Set(["faq"]))).toBe("faq");
+    expect(pickActiveSection(new Set(["faq", "fair-judging"]))).toBe(
+      "fair-judging",
+    );
+    // A section without a link (participants and judges) marks nothing.
+    expect(pickActiveSection(new Set(["participants-judges"]))).toBeNull();
   });
 });

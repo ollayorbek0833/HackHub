@@ -233,6 +233,36 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* The landing's section links glide, motion-safe only, from the visitor's
+     first click or key press (SmoothAnchors sets the attribute on that page
+     only; the jump to a deep link while the page streams in stays instant,
+     so it lands). Route changes still jump: <html data-scroll-behavior>. */
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-smooth-anchors] {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Landing sections fade and rise in once (components/landing/reveal.tsx).
+     Only JS sets data-reveal="idle", and only below the fold with motion
+     allowed; the hidden style exists only under no-preference, so content is
+     visible without JS, with reduced motion and before hydration. Opacity and
+     translate only: no layout shift. The content block follows its heading. */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal="idle"] {
+      opacity: 0;
+      translate: 0 0.875rem;
+    }
+    [data-reveal="done"] {
+      transition:
+        opacity var(--duration-slow) var(--ease-out-expo),
+        translate var(--duration-slow) var(--ease-out-expo);
+    }
+    [data-reveal="done"] + [data-reveal="done"] {
+      transition-delay: calc(var(--stagger-step) * 2);
+    }
+  }
+
   /* Feedback: buttons give a little on press (motion-safe only). */
   @media (prefers-reduced-motion: no-preference) {
     [data-slot="button"] {

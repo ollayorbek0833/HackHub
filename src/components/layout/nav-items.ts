@@ -5,7 +5,9 @@ import type { Role } from "@/generated/prisma/enums";
 
 export type NavItem = { label: string; href: string };
 
-const VISITOR_NAV: NavItem[] = [{ label: "Events", href: "/events" }];
+// "All events", so it never reads the same as the landing's "Events" section
+// link (PAGE_SECTIONS) beside it.
+const VISITOR_NAV: NavItem[] = [{ label: "All events", href: "/events" }];
 
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   PARTICIPANT: [
@@ -26,6 +28,37 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
 /** Navigation items for a role, or for a signed-out visitor when `role` is null. */
 export function getNavItems(role: Role | null): NavItem[] {
   return role ? NAV_BY_ROLE[role] : VISITOR_NAV;
+}
+
+// ---------------------------------------------------------------------------
+// The landing page's sections, as quick links for visitors (signed-in people
+// are sent off "/"). The ids are the LandingSection ids in components/landing.
+
+export type PageSection = { id: string; label: string };
+
+export const PAGE_SECTIONS: readonly PageSection[] = [
+  { id: "how-it-works", label: "How it works" },
+  { id: "for-organizers", label: "Organizers" },
+  { id: "fair-judging", label: "Judging" },
+  { id: "happening-now", label: "Events" },
+  { id: "faq", label: "FAQ" },
+];
+
+/** An in-page anchor on the landing page, and a link to it everywhere else. */
+export function sectionHref(id: string, pathname: string): string {
+  return pathname === "/" ? `#${id}` : `/#${id}`;
+}
+
+/**
+ * The section to mark as current: the first one, in page order, that crosses
+ * the band under the header (useActiveSection). Null in the hero, or while
+ * the band is in a section that has no link.
+ */
+export function pickActiveSection(
+  crossing: ReadonlySet<string>,
+  sections: readonly PageSection[] = PAGE_SECTIONS,
+): string | null {
+  return sections.find((s) => crossing.has(s.id))?.id ?? null;
 }
 
 /** The role as it is shown to people, e.g. in the user menu. */

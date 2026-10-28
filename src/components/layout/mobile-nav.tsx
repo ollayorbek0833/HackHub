@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useRef, useState, type MouseEvent } from "react";
 import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,20 +17,40 @@ import {
 } from "@/components/ui/sheet";
 
 import { logout } from "./actions";
+import { cn } from "@/lib/utils";
+
 import { NavLinks } from "./nav-links";
-import type { NavItem } from "./nav-items";
+import { PAGE_SECTIONS, type NavItem } from "./nav-items";
+import { SectionLink, sectionLinkClass } from "./section-nav";
+import { jumpToSection, useActiveSection } from "./use-active-section";
 
 // Below md the navigation moves into a side sheet: the same items, plus the
-// user menu items (or Log in / Register for a visitor).
+// user menu items (or Log in / Register for a visitor). On the landing page a
+// visitor also gets its sections, under "On this page".
 export function MobileNav({
   items,
   user,
+  sections = false,
 }: {
   items: NavItem[];
   user: { displayName: string; roleLabel: string } | null;
+  /** Show the landing page's section links (visitors, on "/" only). */
+  sections?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const pathname = usePathname();
+  const showSections = sections && pathname === "/";
+  const active = useActiveSection(showSections && open);
+  // A section picked in the sheet: the sheet closes first (its scroll lock
+  // and focus return end), then the page scrolls there.
+  const pendingSection = useRef<string | null>(null);
+
+  const pickSection = (id: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    pendingSection.current = id;
+    close();
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -43,7 +64,17 @@ export function MobileNav({
           <MenuIcon aria-hidden />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right">
+      <SheetContent
+        side="right"
+        onCloseAutoFocus={(event) => {
+          const id = pendingSection.current;
+          if (!id) return;
+          pendingSection.current = null;
+          // Focus moves with the jump, not back to the menu button.
+          event.preventDefault();
+          requestAnimationFrame(() => jumpToSection(id));
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Menu</SheetTitle>
           <SheetDescription className="truncate">
@@ -53,6 +84,34 @@ export function MobileNav({
 
         <div className="flex flex-col gap-4 px-4 pb-6">
           <NavLinks items={items} orientation="vertical" onNavigate={close} />
+          {showSections && (
+            <nav aria-labelledby="mobile-page-sections">
+              <p
+                id="mobile-page-sections"
+                className="px-3 pb-1 font-mono text-small tracking-wide text-muted-foreground uppercase"
+              >
+                On this page
+              </p>
+              <ul className="flex flex-col gap-1">
+                {PAGE_SECTIONS.map(({ id, label }) => (
+                  <li key={id}>
+                    <SectionLink
+                      id={id}
+                      pathname={pathname}
+                      isCurrent={id === active}
+                      onClick={pickSection(id)}
+                      className={cn(
+                        sectionLinkClass(id === active),
+                        "w-full text-base",
+                      )}
+                    >
+                      {label}
+                    </SectionLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
           <Separator />
           {user ? (
             <div className="flex flex-col gap-1">

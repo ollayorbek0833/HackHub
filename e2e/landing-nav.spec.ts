@@ -361,6 +361,161 @@ for (const [width, height] of [
   });
 }
 
+// Happening now streams in after the rest of the page. A jump to a section
+// below it (FAQ) must still end under the header once the events replace the
+// skeleton, even without scroll anchoring (Safari has none; it is turned off
+// here) and on a slow network.
+test.describe("while Happening now is still streaming in", () => {
+  async function slowNetwork(page: Page) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 400,
+      downloadThroughput: 50 * 1024,
+      uploadThroughput: 50 * 1024,
+    });
+  }
+  async function noScrollAnchoring(page: Page) {
+    await page.addInitScript(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync("* { overflow-anchor: none !important; }");
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    });
+  }
+  const skeleton = (page: Page) =>
+    page.locator('#happening-now [aria-busy="true"]');
+
+  // Holds back the dynamic part of a client navigation to "/" (the session
+  // check and the events), so the prefetched page shows Happening now's
+  // skeleton for a while, as on a slow connection.
+  async function slowEvents(page: Page, ms = 3000) {
+    await page.route("**/*", async (route) => {
+      const request = route.request();
+      const headers = await request.allHeaders();
+      if (
+        new URL(request.url()).pathname === "/" &&
+        headers["rsc"] === "1" &&
+        !headers["next-router-prefetch"]
+      )
+        await new Promise((resolve) => setTimeout(resolve, ms));
+      await route.continue();
+    });
+  }
+
+  async function clickFaq(page: Page, width: number) {
+    if (width < 768) {
+      await page.getByRole("button", { name: "Open menu" }).click();
+      await page
+        .getByRole("dialog", { name: "Menu" })
+        .getByRole("navigation", { name: "On this page" })
+        .getByRole("link", { name: "FAQ", exact: true })
+        .click();
+      return;
+    }
+    const nav = sectionNav(page);
+    if (width < 1024) await nav.locator("summary").click();
+    await nav.getByRole("link", { name: "FAQ", exact: true }).click();
+  }
+
+  for (const width of [390, 900, 1440]) {
+    test(`from the top of / at ${width} px, FAQ stays under the header`, async ({
+      page,
+    }) => {
+      test.slow();
+      await page.setViewportSize({ width, height: 844 });
+      await noScrollAnchoring(page);
+      await page.goto("/about");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      // Let the links' prefetches of "/" finish (the page's static shell).
+      await page.waitForLoadState("networkidle");
+      await slowEvents(page);
+      await page
+        .getByRole("banner")
+        .getByRole("link", { name: "HackHub home" })
+        .click();
+      await expect(page).toHaveURL(/\/$/);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        /whole hackathon/,
+      );
+      // The jump starts while the skeleton is still up.
+      await expect(skeleton(page)).toBeVisible();
+      await clickFaq(page, width);
+      await expect(skeleton(page)).toHaveCount(0, { timeout: 30_000 });
+      await expectLandedOn(page, "faq");
+    });
+  }
+
+  for (const width of [900, 1440]) {
+    test(`from /about at ${width} px, FAQ stays under the header`, async ({
+      page,
+    }) => {
+      test.slow();
+      await page.setViewportSize({ width, height: 844 });
+      await noScrollAnchoring(page);
+      await page.goto("/about");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await slowEvents(page);
+      await clickFaq(page, width);
+      await expect(page).toHaveURL(/\/#faq$/);
+      await expect(skeleton(page)).toBeVisible();
+      await expect(skeleton(page)).toHaveCount(0, { timeout: 30_000 });
+      await expectLandedOn(page, "faq");
+    });
+  }
+
+  // The skeleton has the real section's height, so the swap moves nothing
+  // (demo data: one event, which fits the skeleton's one row at any width).
+  for (const width of [390, 900, 1440]) {
+    test(`the skeleton swap shifts no layout at ${width} px`, async ({
+      browser,
+    }) => {
+      const viewport = { width, height: 844 };
+      const height = async (javaScriptEnabled: boolean) => {
+        const context = await browser.newContext({ viewport, javaScriptEnabled });
+        const page = await context.newPage();
+        await page.goto("/");
+        // Without JavaScript the skeleton stays; with it, the events arrive.
+        await expect(skeleton(page)).toHaveCount(javaScriptEnabled ? 0 : 1);
+        const h = await page.evaluate(
+          () => document.getElementById("happening-now")!.offsetHeight,
+        );
+        await context.close();
+        return h;
+      };
+      const [skeletonH, realH] = [await height(false), await height(true)];
+      expect(Math.abs(skeletonH - realH)).toBeLessThanOrEqual(2);
+
+      // And measured: CLS on a slow load that opens on the section, so the
+      // swap happens on screen.
+      const context = await browser.newContext({ viewport });
+      const page = await context.newPage();
+      await page.addInitScript(() => {
+        const w = window as unknown as { __cls: number };
+        w.__cls = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as {
+            value: number;
+            hadRecentInput: boolean;
+          }[]) {
+            if (!entry.hadRecentInput) w.__cls += entry.value;
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+      });
+      await slowNetwork(page);
+      await page.goto("/#happening-now", { timeout: 60_000 });
+      await expect(skeleton(page)).toHaveCount(0, { timeout: 30_000 });
+      await page.waitForTimeout(500);
+      const cls = await page.evaluate(
+        () => (window as unknown as { __cls: number }).__cls,
+      );
+      expect(cls).toBeLessThan(0.1);
+      await context.close();
+    });
+  }
+});
+
 test.describe("before the app's JavaScript runs", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 

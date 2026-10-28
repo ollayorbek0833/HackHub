@@ -22,9 +22,13 @@ const REVEAL_MARGIN = "0px 0px -10% 0px";
 export function Reveal({
   children,
   className,
+  fadeOnly = false,
 }: {
   children: ReactNode;
   className?: string;
+  /** Fade without the rise: for content whose own items move as they enter,
+   *  so the two movements don't stack and the items' boxes stay put. */
+  fadeOnly?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -53,7 +57,12 @@ export function Reveal({
   }, []);
 
   return (
-    <div ref={ref} data-reveal="" className={className}>
+    <div
+      ref={ref}
+      data-reveal=""
+      data-reveal-fade={fadeOnly ? "" : undefined}
+      className={className}
+    >
       {children}
     </div>
   );

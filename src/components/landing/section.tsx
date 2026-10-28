@@ -22,10 +22,11 @@ import { Reveal } from "./reveal";
  * Anchors: scroll-mt-16 is the sticky header's height (h-16), so a jump to
  * `/#id` (the header's section links) lands just under the header.
  *
- * Motion: the heading block and the content each fade and rise in once as
- * they scroll into view (Reveal), motion-safe only and never hiding content
- * without JavaScript. The shell is all it animates; a section's own entrances
- * (DrawIn and the like) play inside it.
+ * Motion: as they scroll into view, the heading block fades and rises in once
+ * and the content fades in once (Reveal), motion-safe only and never hiding
+ * content without JavaScript. The content doesn't rise: a section's own items
+ * (DrawIn and the like) move as they enter, and the shell leaves their boxes
+ * where they are.
  */
 export function LandingSection({
   id,
@@ -67,7 +68,9 @@ export function LandingSection({
           </p>
         )}
       </Reveal>
-      <Reveal className="mt-10 md:mt-12">{children}</Reveal>
+      <Reveal fadeOnly className="mt-10 md:mt-12">
+        {children}
+      </Reveal>
     </section>
   );
 }

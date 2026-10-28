@@ -167,17 +167,40 @@ export async function HappeningNow() {
   );
 }
 
-/** The section while the events load: the same heading, three card shapes. */
+/**
+ * The section while the events load: the same heading, then one row of cards
+ * built like the real ones (banner ratio, logo overlap, title, meta and badge
+ * lines) and the "See all events" line, so the page below doesn't move when
+ * the events arrive (one card on phones, two from md, three from lg; more
+ * events than a row only add height below).
+ */
 export function HappeningNowSkeleton() {
   return (
     <HappeningNowFrame>
-      <div
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-        aria-busy="true"
-      >
-        <Skeleton className="h-72 rounded-xl" />
-        <Skeleton className="h-72 rounded-xl" />
-        <Skeleton className="h-72 rounded-xl" />
+      <div aria-busy="true">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex flex-col overflow-hidden rounded-xl border bg-card",
+                i === 1 && "hidden md:flex",
+                i === 2 && "hidden lg:flex",
+              )}
+            >
+              <Skeleton className="aspect-[5/2] rounded-none md:aspect-[8/3]" />
+              <div className="relative z-10 -mt-8 px-5">
+                <Skeleton className="size-16 rounded-xl ring-4 ring-card" />
+              </div>
+              <div className="flex flex-1 flex-col gap-3 p-5 pt-3">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="h-5 w-5/6" />
+                <Skeleton className="mt-auto h-6 w-40 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className="mt-6 h-11 w-36" />
       </div>
     </HappeningNowFrame>
   );

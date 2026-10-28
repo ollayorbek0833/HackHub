@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { PAGE_SECTIONS, pickActiveSection } from "./nav-items";
+import { SECTION_JUMP_EVENT } from "./smooth-anchors";
 
 // The band a section has to cross to be the current one: from just under the
 // sticky header (h-16, 64 px) to halfway down the viewport. It starts 8 px
@@ -77,6 +78,8 @@ export function useActiveSection(enabled: boolean): string | null {
  * starts from the section.
  */
 export function jumpToSection(id: string) {
+  // LandOnHash keeps the section in place while the page settles.
+  window.dispatchEvent(new CustomEvent(SECTION_JUMP_EVENT, { detail: id }));
   const el = document.getElementById(id);
   if (el && window.location.hash === `#${id}`) {
     // Already the hash: setting it again wouldn't scroll.

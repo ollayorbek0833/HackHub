@@ -247,10 +247,14 @@
      Only JS sets data-reveal="idle", and only below the fold with motion
      allowed; the hidden style exists only under no-preference, so content is
      visible without JS, with reduced motion and before hydration. Opacity and
-     translate only: no layout shift. The content block follows its heading. */
+     translate only: no layout shift. The content block follows its heading,
+     fading only (data-reveal-fade): every section's own items rise in on
+     their own, and a rising wrapper would stack on that. */
   @media (prefers-reduced-motion: no-preference) {
     [data-reveal="idle"] {
       opacity: 0;
+    }
+    [data-reveal="idle"]:not([data-reveal-fade]) {
       translate: 0 0.875rem;
     }
     [data-reveal="done"] {

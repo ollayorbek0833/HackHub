@@ -39,39 +39,92 @@ export function SmoothAnchors() {
 
 const INTERACTIONS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
 
+/** Fired by jumpToSection (the phone menu), which may not change the hash. */
+export const SECTION_JUMP_EVENT = "landing:section-jump";
+
+// How long a jump is kept in place. The streamed parts of the page arrive well
+// within this; after it, the visitor may be scrolling in ways we can't see
+// (dragging the scrollbar).
+const HOLD_MS = 10_000;
+
 /**
- * A deep link (/#faq) that the browser's own jump missed: if the browser
- * looked for the section before the page was tall enough, it gives up and the
- * page stays at the top. Once the page has loaded, if the hash names an
- * element in <main> that isn't in view, and the visitor hasn't started moving
- * around, jump there once. The jump is instant (smooth scrolling isn't on yet,
- * see SmoothAnchors), so reduced motion is respected.
+ * Keeps the section a visitor jumped to under the header while the page is
+ * still settling. A jump is a deep link at load (/#faq), a click on an in-page
+ * anchor, or a pick in the phone menu.
+ *
+ * - The browser's own jump at load can miss: if it looked for the section
+ *   before the page was tall enough, it gives up and the page stays at the
+ *   top. Once the page has loaded, land it.
+ * - Streamed content above the section (Happening now's events replacing its
+ *   skeleton) changes the page's height. Scroll anchoring hides that in some
+ *   browsers, but not during a smooth scroll, and not at all in others. So
+ *   whenever <main> changes size, land the section again.
+ *
+ * Only until the visitor presses a key or pointer, turns a wheel or touches
+ * the screen (they're moving on their own), and for at most HOLD_MS. Each
+ * landing is instant, so reduced motion is respected and a glide still in
+ * flight just finishes on the spot.
  */
 export function LandOnHash() {
   useEffect(() => {
-    let interacted = false;
-    const mark = () => {
-      interacted = true;
-    };
-    for (const type of INTERACTIONS)
-      window.addEventListener(type, mark, { capture: true, passive: true });
+    let target: string | null = null;
+    let expires = 0;
 
-    const land = () => {
-      if (interacted || window.location.hash.length < 2) return;
-      const id = decodeURIComponent(window.location.hash.slice(1));
+    const hold = (id: string) => {
       const el = document.getElementById(id);
       if (!el || !el.closest("main")) return;
-      const { top } = el.getBoundingClientRect();
-      if (top >= 0 && top <= window.innerHeight / 2) return;
-      el.scrollIntoView({ block: "start" });
+      target = id;
+      expires = Date.now() + HOLD_MS;
     };
+    const release = () => {
+      target = null;
+    };
+
+    const land = () => {
+      if (!target || Date.now() > expires) return;
+      const el = document.getElementById(target);
+      if (!el) return;
+      const want = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+      if (Math.abs(el.getBoundingClientRect().top - want) <= 2) return;
+      el.scrollIntoView({ block: "start", behavior: "instant" });
+    };
+
+    const hashId = () => decodeURIComponent(window.location.hash.slice(1));
+
+    // A click on a same-page "#id" link (after its pointerdown released).
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a[href]");
+      if (!(link instanceof HTMLAnchorElement)) return;
+      const url = new URL(link.href);
+      if (url.pathname !== window.location.pathname || url.hash.length < 2)
+        return;
+      hold(decodeURIComponent(url.hash.slice(1)));
+    };
+    const onHashChange = () => hold(hashId());
+    const onJump = (event: Event) => hold((event as CustomEvent<string>).detail);
+
+    for (const type of INTERACTIONS)
+      window.addEventListener(type, release, { capture: true, passive: true });
+    document.addEventListener("click", onClick);
+    window.addEventListener("hashchange", onHashChange);
+    window.addEventListener(SECTION_JUMP_EVENT, onJump);
+
+    if (window.location.hash.length > 1) hold(hashId());
     if (document.readyState === "complete") land();
     else window.addEventListener("load", land, { once: true });
 
+    const main = document.querySelector("main");
+    const resizes = new ResizeObserver(() => land());
+    if (main) resizes.observe(main);
+
     return () => {
+      resizes.disconnect();
       window.removeEventListener("load", land);
       for (const type of INTERACTIONS)
-        window.removeEventListener(type, mark, { capture: true });
+        window.removeEventListener(type, release, { capture: true });
+      document.removeEventListener("click", onClick);
+      window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener(SECTION_JUMP_EVENT, onJump);
     };
   }, []);
   return null;

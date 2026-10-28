@@ -1,0 +1,28 @@
+name: Question or request
+description: Ask a question, ask to run an event as an organizer, or ask about your account and data.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues are public. Don't post your email address, phone number or password here: if we need to confirm an account is yours, we'll agree on a way in the replies.
+        Found a security problem? Don't open an issue: report it privately (see SECURITY.md).
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this about?
+      options:
+        - A question about using HackHub
+        - I'd like to run an event (organizer account)
+        - My account or data (a copy, a correction or deletion)
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: |
+        For an event: who is organizing it (club, company, community or university), roughly when, and how many people you expect.
+        For your account: the name on your profile and what you'd like us to do.
+    validations:
+      required: true

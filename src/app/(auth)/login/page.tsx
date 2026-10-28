@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
@@ -13,10 +12,15 @@ import {
 import { getCurrentUser } from "@/lib/auth/dal";
 import { ROLE_HOME } from "@/lib/auth/permissions";
 import { safeCallbackUrl } from "@/lib/auth/redirects";
+import { pageMetadata } from "@/lib/site";
 
 import { login } from "./actions";
 
-export const metadata: Metadata = { title: "Log in · HackHub" };
+export const metadata = pageMetadata({
+  title: "Log in",
+  description: "Log in to HackHub to see your events, your team and your results.",
+  path: "/login",
+});
 
 // docs/08 > /login. Open to everyone; a signed-in user goes to their role home
 // (the proxy does this too, from the JWT; this check reads the database).

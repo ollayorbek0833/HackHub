@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckIcon, InfoIcon, LockIcon } from "lucide-react";
@@ -6,7 +7,11 @@ import { Suspense, type ReactNode } from "react";
 import { EventAvatar } from "@/components/events/event-avatar";
 import { EventBanner } from "@/components/events/event-banner";
 import { EventContext } from "@/components/events/event-context";
-import { formatEventDates, plural } from "@/components/events/event-format";
+import {
+  excerpt,
+  formatEventDates,
+  plural,
+} from "@/components/events/event-format";
 import { RegisterForm } from "@/components/events/register-form";
 import { PhaseLabel } from "@/components/events/phase-dot";
 import { EventStatusBadges } from "@/components/events/status-badge";
@@ -23,6 +28,7 @@ import {
   getParticipantState,
   type ParticipantState,
 } from "@/lib/queries/participant-progress";
+import { OG_IMAGE, pageMetadata } from "@/lib/site";
 import { eventImageUrl } from "@/lib/uploads/url";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +42,35 @@ import { registerForEvent } from "./actions";
 // screen (ActionDock). Everyone can open it by link; the primary action
 // depends on who is looking (docs/08's table of situations). Params and the
 // session are read inside Suspense (Cache Components).
+
+// The tab title and link preview: the event's name and the start of its
+// description, with its banner as the image when it has one. An unknown id
+// gets the plain "Event" title; the page itself shows the 404.
+export async function generateMetadata({
+  params,
+}: PageProps<"/events/[eventId]">): Promise<Metadata> {
+  const { eventId } = await params;
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { name: true, description: true, bannerPath: true },
+  });
+  if (!event) return { title: "Event" };
+
+  const meta = pageMetadata({
+    title: event.name,
+    description: excerpt(event.description),
+    path: `/events/${eventId}`,
+  });
+  const banner = eventImageUrl(event.bannerPath);
+  const image = banner
+    ? { url: banner, width: 1600, height: 600, alt: event.name }
+    : OG_IMAGE;
+  return {
+    ...meta,
+    openGraph: { ...meta.openGraph, images: [image] },
+    twitter: { ...meta.twitter, images: [image.url] },
+  };
+}
 
 export default function EventPage({ params }: PageProps<"/events/[eventId]">) {
   return (

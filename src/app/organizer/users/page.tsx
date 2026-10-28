@@ -10,7 +10,7 @@ import { usersFilterSchema } from "@/lib/validation/roles";
 
 import { setUserRole } from "./actions";
 
-export const metadata: Metadata = { title: "Users · HackHub" };
+export const metadata: Metadata = { title: "Users" };
 
 // docs/08 > /organizer/users. The organizer layout supplies <main>. The
 // session, searchParams and the database are read inside Suspense.

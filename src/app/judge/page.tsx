@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { judgeTeamsInEvent } from "@/lib/queries/judging";
 import { eventImageUrl } from "@/lib/uploads/url";
 
-export const metadata: Metadata = { title: "Judging · HackHub" };
+export const metadata: Metadata = { title: "Judging" };
 
 // docs/08 > /judge. Every judge judges every submitted team of every event in
 // judging (Decision 1). Rendered under judge/loading.tsx, so reading the

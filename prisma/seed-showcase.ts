@@ -129,6 +129,7 @@ type Person = {
   role: "ORGANIZER" | "JUDGE" | "PARTICIPANT";
   first: string;
   last: string;
+  female: boolean;
   email: string;
   phone: string;
   github: string;
@@ -147,19 +148,19 @@ function femaleSurname(male: string) {
   return `${male}a`;
 }
 
-function makeName(): { first: string; last: string } {
+function makeName(): { first: string; last: string; female: boolean } {
   const female = chance(0.46);
   if (chance(0.92)) {
     const surname = pick(D.UZBEK_SURNAMES);
     return female
-      ? { first: pick(D.FEMALE_FIRST), last: femaleSurname(surname) }
-      : { first: pick(D.MALE_FIRST), last: surname };
+      ? { first: pick(D.FEMALE_FIRST), last: femaleSurname(surname), female }
+      : { first: pick(D.MALE_FIRST), last: surname, female };
   }
   const o = D.OTHER_PEOPLE;
   const first = female ? pick(o.femaleFirst) : pick(o.maleFirst);
-  if (chance(0.45)) return { first, last: pick(o.neutralSurnames) };
+  if (chance(0.45)) return { first, last: pick(o.neutralSurnames), female };
   const surname = pick(o.surnames);
-  return { first, last: female ? femaleSurname(surname) : surname };
+  return { first, last: female ? femaleSurname(surname) : surname, female };
 }
 
 /** Gmail-style local part: letters, digits and dots only, lowercase. */
@@ -207,19 +208,19 @@ function makePhone(): string {
   }
 }
 
-/** A GitHub-style handle (letters, digits, hyphens), unique across people. */
+/** 2 to 4 digits, so a made-up handle is unlikely to be someone's real one. */
+const digits = () => String(between(10, 9999));
+
+/**
+ * A GitHub-style handle (letters, digits, hyphens), unique across people.
+ * Always the name plus 2 to 4 digits, so it's clearly derived and unlikely to
+ * belong to a real account.
+ */
 function makeHandle(first: string, last: string): string {
   const f = first.toLowerCase();
   const l = last.toLowerCase();
-  const options = [`${f}${l}`, `${f}-${l}`, `${f[0]}${l}`, `${l}${f[0]}`, `${f}${l[0]}`, `${f}-dev`, `${f}${l}-dev`];
-  for (const handle of shuffle(options)) {
-    if (!usedHandles.has(handle)) {
-      usedHandles.add(handle);
-      return handle;
-    }
-  }
   for (;;) {
-    const handle = `${f}${l}${between(1, 999)}`;
+    const handle = pick([`${f}${l}${digits()}`, `${f}-${l}${digits()}`, `${f[0]}${l}${digits()}`, `${f}${l[0]}${digits()}`]);
     if (!usedHandles.has(handle)) {
       usedHandles.add(handle);
       return handle;
@@ -230,12 +231,10 @@ function makeHandle(first: string, last: string): string {
 function makeLinks(first: string, last: string, github: string, count: number): string[] {
   const f = first.toLowerCase();
   const l = last.toLowerCase();
-  const hex = () => Array.from({ length: 6 }, () => "0123456789abcdef"[randInt(16)]).join("");
-  const telegram = pick([`${f}_${l}`, `${f}${l}`, `${f}_${l[0]}`, `${l}_${f}`]);
   const all = [
     `https://github.com/${github}`,
-    `https://linkedin.com/in/${f}-${l}-${hex()}`,
-    `https://t.me/${telegram}`,
+    `https://linkedin.com/in/${f}-${l}-${digits()}`,
+    `https://t.me/${f}_${l}${digits()}`,
   ];
   if (count === 3) return all;
   // GitHub most often, then LinkedIn, then Telegram.
@@ -255,8 +254,10 @@ function makeBio(faculty: string, skills: string[]): string {
   const uni = pick(D.UNIVERSITIES);
   const tools = skills.filter((skill) => !D.SOFT_SKILLS.includes(skill));
   const [skillA, skillB] = shuffle(tools.length > 0 ? tools : skills);
-  const values = { faculty, uni, skillA, skillB: skillB ?? skillA, year: year.year, yearLower: year.yearLower };
-  const parts = [fill(pick(D.BIO_OPENERS), values), fill(pick(D.BIO_MIDDLES), values)];
+  const values = { faculty, uni, skillA, skillB: skillB ?? "", year: year.year, yearLower: year.yearLower };
+  // One skill gets a one-skill sentence, so no bio names the same skill twice.
+  const middle = skillB === undefined ? pick(D.BIO_MIDDLES_ONE) : pick(D.BIO_MIDDLES);
+  const parts = [fill(pick(D.BIO_OPENERS), values), fill(middle, values)];
   for (const extra of shuffle(D.BIO_EXTRAS).slice(0, between(0, 2))) {
     if ([...parts, extra].join(" ").length <= 400) parts.push(extra);
   }
@@ -302,7 +303,7 @@ function checkProfile(p: Person) {
 }
 
 function makeOrganizer(i: number): Person {
-  const { first, last } = makeName();
+  const { first, last, female } = makeName();
   const github = makeHandle(first, last);
   const role = D.ORGANIZER_ROLES[i];
   const person: Person = {
@@ -310,21 +311,22 @@ function makeOrganizer(i: number): Person {
     role: "ORGANIZER",
     first,
     last,
+    female,
     email: makeEmail(first, last),
     phone: makePhone(),
     github,
     faculty: role.faculty,
     skills: shuffle(["Event management", "Public speaking", "Partnerships", "Project management", "Community building", "Pitching"]).slice(0, between(2, 4)),
     bio: role.bio,
-    links: makeLinks(first, last, github, between(1, 2)).filter((l) => !l.includes("github.com")),
+    // About 40% of profiles have links: an organizer's is LinkedIn.
+    links: chance(0.4) ? [makeLinks(first, last, github, 3)[1]] : [],
     createdAt: at(dayFromToday(-between(400, 520)), between(9, 18)),
   };
-  if (person.links.length === 0) person.links = [makeLinks(first, last, github, 3)[1]];
   return person;
 }
 
 function makeJudge(i: number): Person {
-  const { first, last } = makeName();
+  const { first, last, female } = makeName();
   const github = makeHandle(first, last);
   const title = D.JUDGE_ROLES[i % D.JUDGE_ROLES.length];
   const employer = title === "Associate professor" ? pick(D.UNIVERSITIES) : pick(D.COMPANIES);
@@ -337,28 +339,31 @@ function makeJudge(i: number): Person {
     role: "JUDGE",
     first,
     last,
+    female,
     email: makeEmail(first, last),
     phone: makePhone(),
     github,
     faculty,
     skills: shuffle(facultyEntry.skills).slice(0, between(3, 6)),
     bio,
-    links: chance(0.5) ? [links[0], links[1]] : [links[1]],
+    links: !chance(0.4) ? [] : chance(0.5) ? [links[0], links[1]] : [links[1]],
     createdAt: at(dayFromToday(-between(150, 300)), between(9, 18)),
   };
 }
 
 function makeParticipant(): Person {
-  const { first, last } = makeName();
+  const { first, last, female } = makeName();
   const faculty = weighted(D.FACULTIES, (f) => f.weight);
   const skills = makeSkills(faculty);
   const github = makeHandle(first, last);
-  const linkCount = weighted([0, 1, 2, 3], (n) => [25, 35, 25, 15][n]);
+  // About 40% of profiles have links.
+  const linkCount = weighted([0, 1, 2, 3], (n) => [60, 22, 12, 6][n]);
   return {
     id: newId(),
     role: "PARTICIPANT",
     first,
     last,
+    female,
     email: makeEmail(first, last),
     phone: makePhone(),
     github,
@@ -402,29 +407,45 @@ type EventPlan = {
   regAt: Map<string, Date>;
 };
 
+/** Calendar days an event spans. A "Night" runs overnight, so it spans two. */
 function durationDays(name: string) {
-  if (name.includes("Night")) return 1;
+  if (name.includes("Night")) return 2;
   if (name.includes("Week") && !name.includes("Weekend")) return 5;
   if (name.includes("Weekend") || name.includes("Sprint") || name.includes("Jam")) return 2;
   return between(2, 3);
 }
 
-function makeDates(phase: Phase, days: number) {
-  let start: Date;
-  if (phase === "finished") {
-    start = dayFromToday(-between(14, 56) - (days - 1));
-  } else if (phase === "judging") {
-    start = dayFromToday(-between(1, 7) - (days - 1));
-  } else if (phase === "building") {
-    // Running now: started 1 or 2 days ago, last day today or later.
-    const ago = between(1, Math.min(2, days));
-    start = dayFromToday(-ago);
-    if (days - 1 < ago) days = ago + 1 + between(0, 1);
-  } else if (phase === "registration") {
-    start = dayFromToday(between(7, 28));
-  } else {
-    start = dayFromToday(between(30, 90));
-  }
+/** Weekend events start on a Saturday, Night events on a Friday evening. */
+function startWeekday(name: string): number | null {
+  if (name.includes("Weekend")) return 6;
+  if (name.includes("Night")) return 5;
+  return null;
+}
+
+/**
+ * Start offsets (days from today) allowed for each phase, for an event that
+ * spans `days` calendar days:
+ * - finished: ended 2 to 8 weeks ago;
+ * - judging: ended 1 to 7 days ago;
+ * - building: started at least a day ago and ends tomorrow or later, so it's
+ *   still running tomorrow (a demo the day after the seed run still sees it live);
+ * - registration: starts in 1 to 4 weeks;
+ * - upcoming: starts in 1 to 3 months.
+ */
+function makeDates(phase: Phase, name: string, days: number) {
+  if (phase === "building") days = Math.max(days, between(3, 4));
+  const range: Record<Phase, [number, number]> = {
+    finished: [-56 - (days - 1), -14 - (days - 1)],
+    judging: [-7 - (days - 1), -1 - (days - 1)],
+    building: [-(days - 2), -1],
+    registration: [7, 28],
+    upcoming: [30, 90],
+  };
+  const [lo, hi] = range[phase];
+  const offsets = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+  const weekday = phase === "building" ? null : startWeekday(name);
+  const fitting = weekday === null ? offsets : offsets.filter((o) => dayFromToday(o).getUTCDay() === weekday);
+  const start = dayFromToday(pick(fitting.length > 0 ? fitting : offsets));
   return { startDate: start, endDate: new Date(start.getTime() + (days - 1) * DAY) };
 }
 
@@ -444,15 +465,19 @@ function makeDescription(spec: D.EventSpec, days: number, maxTeamSize: number): 
     city: spec.city,
     prize: pick([10, 15, 20, 25, 30, 40, 50]),
   };
-  const length = days === 1 ? "one-night" : `${days}-day`;
+  const length = spec.name.includes("Night") ? "overnight" : `${days}-day`;
   const where = spec.venue.includes(spec.city) ? spec.venue : `${spec.venue}, ${spec.city}`;
-  const intro = `${spec.name} is a ${length} ${eventNoun(spec.theme)} hosted by ${spec.host} at ${where}.`;
+  // "IT Park Bukhara at IT Park Bukhara": skip "hosted by" when the venue names the host.
+  const hostWords = spec.host.split(" ").slice(0, 2).join(" ");
+  const host = spec.venue.includes(hostWords) ? "" : ` hosted by ${spec.host}`;
+  const intro = `${spec.name} is ${length === "overnight" ? "an" : "a"} ${length} ${eventNoun(spec.theme)}${host} at ${where}.`;
   const paragraphs = [
     `${intro} ${pick(D.THEME_CHALLENGES[spec.theme])}`,
     fill(pick(D.FORMAT_PARAGRAPHS), values),
   ];
   if (chance(0.7)) paragraphs.push(fill(pick(D.PRIZE_PARAGRAPHS), values));
-  if (chance(0.6)) paragraphs.push(fill(pick(D.AUDIENCE_PARAGRAPHS), values));
+  if (spec.audience === "women") paragraphs.push(fill(D.WOMEN_AUDIENCE_PARAGRAPH, values));
+  else if (chance(0.6)) paragraphs.push(fill(pick(D.AUDIENCE_PARAGRAPHS), values));
   return paragraphs.join("\n\n");
 }
 
@@ -461,13 +486,14 @@ function makeCriteria(theme: D.Theme) {
   const pool = D.THEME_CRITERIA[theme];
   const chosen = shuffle(pool.map((_, i) => i)).slice(0, n).sort((a, b) => a - b);
   const split = pick(D.WEIGHT_SPLITS[n]);
-  const scale = chance(0.85) ? 10 : pick([5, 20]);
+  // Scales of 5 or 10 only: a 0–20 scale is 21 buttons on the scorecard.
+  const scale = chance(0.88) ? 10 : 5;
   const criteria = chosen.map((index, i) => ({
     id: newId(),
     name: pool[index],
     weightPercent: split[i],
     // Mostly one scale for the whole event; now and then one criterion differs.
-    maxScore: chance(0.08) ? pick([5, 10, 20].filter((m) => m !== scale)) : scale,
+    maxScore: chance(0.08) ? 15 - scale : scale,
   }));
   const issues = validateCriteria(criteria);
   if (issues.length > 0) throw new Error(`Criteria for ${theme} break the rules: ${issues[0].message}`);
@@ -482,13 +508,21 @@ function build() {
   const participants = Array.from({ length: 1000 }, makeParticipant);
 
   // Events: 10 per organizer, 2 per phase.
-  const specs = shuffle(D.EVENTS);
-  if (new Set(specs.map((s) => s.name)).size !== 50) throw new Error("Expected 50 unique event names.");
+  const shuffled = shuffle(D.EVENTS);
+  if (new Set(shuffled.map((s) => s.name)).size !== 50) throw new Error("Expected 50 unique event names.");
+  // Per organizer, the building slots (5th and 6th) take events that can run
+  // three days or more, so a "Weekend" or "Night" never stretches to fit.
+  const fixedLength = (spec: D.EventSpec) => startWeekday(spec.name) !== null;
+  const specs = Array.from({ length: 5 }, (_, o) => {
+    const chunk = shuffled.slice(o * 10, o * 10 + 10);
+    const flexible = chunk.filter((spec) => !fixedLength(spec)).slice(0, 2);
+    const rest = chunk.filter((spec) => !flexible.includes(spec));
+    return [...rest.slice(0, 4), ...flexible, ...rest.slice(4)];
+  }).flat();
   const events: EventPlan[] = specs.map((spec, i) => {
     const organizer = organizers[Math.floor(i / 10)];
     const phase = PHASES_PER_ORGANIZER[i % 10];
-    const days = durationDays(spec.name);
-    const { startDate, endDate } = makeDates(phase, days);
+    const { startDate, endDate } = makeDates(phase, spec.name, durationDays(spec.name));
     const maxTeamSize = weighted([3, 4, 5], (k) => ({ 3: 30, 4: 45, 5: 25 })[k] ?? 0);
     const createdAt =
       phase === "upcoming"
@@ -546,6 +580,7 @@ function build() {
       const wanted = regCount[phase]();
       const chosen = new Set<string>();
       const free = (p: Person, ignoreOverlap: boolean) =>
+        (event.spec.audience !== "women" || p.female) &&
         !chosen.has(p.id) &&
         joined.get(p.id)!.length < 6 &&
         (ignoreOverlap || !joined.get(p.id)!.some((e) => overlaps(e, event)));
@@ -646,8 +681,29 @@ function build() {
         }
       }
     };
-    const products = shuffle(D.PRODUCT_NAMES);
-    let ideas: { what: string; detail: string }[] = [];
+    // Ideas are drawn without replacement: the event's theme first, then its
+    // related themes, so no idea (and no title) repeats within an event.
+    const themeIdeas = (theme: D.Theme) => {
+      const own = D.THEME_IDEAS[theme].map((idea) => ({ ...idea, theme }));
+      if (theme !== "ctf") return shuffle(own);
+      const combos = D.CTF_CATEGORIES.flatMap((cat) =>
+        D.CTF_DELIVERABLES.map((d) => ({ what: fill(d.what, { cat }), detail: fill(d.detail, { cat }), theme })),
+      );
+      return shuffle([...own, ...combos]);
+    };
+    const ideas = [
+      ...themeIdeas(event.spec.theme),
+      ...shuffle(D.RELATED_THEMES[event.spec.theme].flatMap((t) => D.THEME_IDEAS[t].map((idea) => ({ ...idea, theme: t })))),
+    ].reverse(); // pop() takes from the end
+    const usedProducts = new Set<string>();
+    const productFor = (theme: D.Theme) => {
+      const free = D.PRODUCTS.filter((p) => !usedProducts.has(p.name));
+      const fitting = free.filter((p) => p.themes?.includes(theme));
+      const generic = free.filter((p) => p.themes === null);
+      const choice = pick(fitting.length > 0 && (generic.length === 0 || chance(0.6)) ? fitting : generic);
+      usedProducts.add(choice.name);
+      return choice.name;
+    };
 
     const teamDeadline =
       event.phase === "registration" ? at(TODAY, -1) : at(event.startDate, 12);
@@ -677,9 +733,9 @@ function build() {
       }
 
       if (event.phase === "registration" || !chance(submitShare)) continue;
-      if (ideas.length === 0) ideas = shuffle(D.THEME_IDEAS[event.spec.theme]);
-      const idea = ideas.pop()!;
-      const product = products.pop()!;
+      const idea = ideas.pop();
+      if (!idea) throw new Error(`${event.spec.name} ran out of project ideas.`);
+      const product = productFor(idea.theme);
       const teamSkills = shuffle([...new Set(group.flatMap((p) => p.skills))].filter((skill) => !D.SOFT_SKILLS.includes(skill))).slice(0, 3);
       const built = teamSkills.length > 1 ? `Built with ${teamSkills.slice(0, -1).join(", ")} and ${teamSkills.at(-1)}.` : "";
       const status = fill(pick(D.DEMO_STATUS_LINES), { n: between(6, 40) });
@@ -811,6 +867,19 @@ const INVARIANTS: { name: string; sql: string }[] = [
     sql: `SELECT invite_code FROM teams GROUP BY invite_code HAVING COUNT(*) > 1`,
   },
   {
+    name: "no project title or idea repeats within an event",
+    sql: `SELECT t.event_id, s.title FROM submissions s JOIN teams t ON t.id = s.team_id
+          GROUP BY t.event_id, s.title HAVING COUNT(*) > 1
+          UNION ALL
+          SELECT t.event_id, split_part(s.title, ': ', 2) FROM submissions s JOIN teams t ON t.id = s.team_id
+          GROUP BY t.event_id, split_part(s.title, ': ', 2) HAVING COUNT(*) > 1`,
+  },
+  {
+    name: "no bio names the same skill twice in one sentence",
+    sql: `SELECT user_id FROM profiles
+          WHERE bio ~ '(use|with|are|take the) ([A-Za-z.+# ]+?) (and|, and I am learning more|side of a project, with some) \\2( |\\.|,)'`,
+  },
+  {
     name: "every user has a profile",
     sql: `SELECT u.id FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE p.user_id IS NULL`,
   },
@@ -850,6 +919,27 @@ async function checkInvariants(tx: Tx, data: ReturnType<typeof build>) {
       if (statusCount.get(`${o.id}:${phase}`) !== 2) failures.push(`${o.email} does not have 2 ${phase} events`);
     }
   }
+  // Live events are still live tomorrow: building events started at least a
+  // day ago and every live event ends after today.
+  for (const plan of data.events) {
+    if (plan.phase === "building" && !(plan.startDate < TODAY && plan.endDate > TODAY)) {
+      failures.push(`${plan.spec.name}: building but runs ${iso(plan.startDate)} to ${iso(plan.endDate)}`);
+    }
+    if (plan.phase === "registration" && !(plan.startDate > TODAY)) {
+      failures.push(`${plan.spec.name}: taking registrations but starts ${iso(plan.startDate)}`);
+    }
+  }
+
+  // Women-only events: at least 90% of registrants are women (the seed registers only women).
+  const female = new Map(data.people.map((p) => [p.id, p.female]));
+  for (const plan of data.events.filter((e) => e.spec.audience === "women")) {
+    const regs = await tx.eventRegistration.findMany({ where: { eventId: plan.id }, select: { userId: true } });
+    const women = regs.filter((r) => female.get(r.userId)).length;
+    if (regs.length > 0 && women / regs.length < 0.9) {
+      failures.push(`${plan.spec.name}: ${women} of ${regs.length} registrants are women, under 90%`);
+    }
+  }
+
   const roles = await tx.user.groupBy({ by: ["role"], _count: true });
   const byRole = Object.fromEntries(roles.map((r) => [r.role, r._count]));
   if (byRole.ORGANIZER !== 5 || byRole.JUDGE !== 15 || byRole.PARTICIPANT !== 1000) {
@@ -870,13 +960,13 @@ async function main() {
     const [{ db }] = await prisma.$queryRaw<{ db: string }[]>`SELECT current_database() AS db`;
     console.log(`Database: ${db} on ${target.hostname}:${target.port || "5432"}`);
     const [users, events] = await Promise.all([prisma.user.count(), prisma.event.count()]);
-    console.log(`It holds ${users} users and ${events} events. All of it will be deleted.`);
+    console.log(`It holds ${users} users and ${events} events.`);
     if (process.env.SHOWCASE_CONFIRM !== `wipe:${db}`) {
-      console.error(`Refusing to run. To wipe "${db}" and fill it with showcase data, set SHOWCASE_CONFIRM=wipe:${db}`);
+      console.error(`Refusing to run, so nothing was deleted. To wipe "${db}" and fill it with showcase data, set SHOWCASE_CONFIRM=wipe:${db}`);
       process.exitCode = 1;
       return;
     }
-    console.log(`Today is ${iso(TODAY)} (event dates are relative to it).`);
+    console.log(`Deleting all of it. Today is ${iso(TODAY)} (event dates are relative to it).`);
 
     const data = build();
     const passwordHash = await hashPassword(PASSWORD);

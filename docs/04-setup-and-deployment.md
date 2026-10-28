@@ -113,14 +113,15 @@ open, 2 live with registration open and 2 upcoming, with criteria, teams, submis
 - It runs in one transaction and checks the data (criteria total 100, team sizes, scores only for submitted teams, unique
   emails, phones and invite codes, and more) before committing. If a check fails, it rolls back and the old data stays.
 - It's deterministic: running it again gives the same people, events and teams. Event dates are relative to today in
-  Tashkent, or to `--today=YYYY-MM-DD`.
+  Tashkent, or to `--today=YYYY-MM-DD`. Live events run until at least the day after `--today`, so pass the demo day
+  when seeding ahead of it.
 - It's never part of a deploy. Back up first (see Backups), then pause automatic deploys while it runs.
 
 ```bash
 # locally
 SHOWCASE_CONFIRM=wipe:hackhub npm run db:seed:showcase
 # production, in the migrate image (it has tsx and prisma/)
-docker compose -f docker-compose.prod.yml run --rm -e SHOWCASE_CONFIRM=wipe:<db> migrate npx tsx prisma/seed-showcase.ts
+docker compose -f docker-compose.prod.yml run --rm -e SHOWCASE_CONFIRM=wipe:<db> migrate npx tsx prisma/seed-showcase.ts --today=<demo day>
 ```
 
 Afterwards, point `SEED_ORGANIZER_EMAIL` at the first organizer it prints and set `SEED_ORGANIZER_PASSWORD=12345678i`, so

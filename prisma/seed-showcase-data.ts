@@ -120,6 +120,14 @@ export const BIO_MIDDLES = [
   "I usually take the {skillA} side of a project, with some {skillB} when needed.",
   "My strongest tools are {skillA} and {skillB}.",
 ];
+/** For people with a single tool skill, so no sentence names it twice. */
+export const BIO_MIDDLES_ONE = [
+  "Most of my projects use {skillA}.",
+  "I work mainly with {skillA}, and I am learning a second stack this semester.",
+  "Comfortable with {skillA}, and happy to pick up whatever the team needs.",
+  "I usually take the {skillA} side of a project.",
+  "My strongest tool is {skillA}.",
+];
 export const BIO_EXTRAS = [
   "Took part in two hackathons last year and placed in the top five at one of them.",
   "I help run the programming club at my faculty.",
@@ -188,6 +196,8 @@ export type EventSpec = {
   host: string;
   city: "Tashkent" | "Samarkand" | "Bukhara";
   venue: string;
+  /** Who may register. Women in Tech registers women only. */
+  audience?: "women";
 };
 
 /** 50 events, each name unique. */
@@ -238,7 +248,7 @@ export const EVENTS: EventSpec[] = [
   { name: "Small Business Digital Week", theme: "commerce", host: "Tashkent State University of Economics", city: "Tashkent", venue: "the TSUE campus on Islam Karimov Street" },
   { name: "Social Impact Hackathon", theme: "social", host: "New Uzbekistan University", city: "Tashkent", venue: "New Uzbekistan University on Movarounnahr Street" },
   { name: "Accessibility Hack", theme: "social", host: "Webster University in Tashkent", city: "Tashkent", venue: "the Webster University campus" },
-  { name: "Women in Tech Hackathon", theme: "social", host: "Central Asian University", city: "Tashkent", venue: "the Central Asian University campus" },
+  { name: "Women in Tech Hackathon", theme: "social", host: "Central Asian University", city: "Tashkent", venue: "the Central Asian University campus", audience: "women" },
   { name: "IoT Makers Weekend", theme: "iot", host: "Turin Polytechnic University in Tashkent", city: "Tashkent", venue: "the Turin Polytechnic lab building" },
   { name: "Hardware Hack Samarkand", theme: "iot", host: "Samarkand State University", city: "Samarkand", venue: "the physics faculty labs at Samarkand State University" },
   { name: "Smart Home Challenge", theme: "iot", host: "Zarafshan Cloud", city: "Tashkent", venue: "the Zarafshan Cloud office in Mirzo Ulugbek district" },
@@ -315,6 +325,9 @@ export const PRIZE_PARAGRAPHS = [
   "Prizes for the top three teams total {prize} million so'm. The jury also gives a special mention for the best first-time team.",
   "The winning team receives {prize} million so'm and mentoring from {company} for three months after the event.",
 ];
+
+export const WOMEN_AUDIENCE_PARAGRAPH =
+  "Open to women students and recent graduates from any university in Uzbekistan, whatever their field. Mentors are women engineers, designers and founders from {company} and {company2}. Participation is free.";
 
 export const AUDIENCE_PARAGRAPHS = [
   "Open to students from any university in Uzbekistan. Participation is free.",
@@ -416,6 +429,41 @@ export const THEME_IDEAS: Record<Theme, { what: string; detail: string }[]> = {
     { what: "a space shooter with one-button controls", detail: "A one-button arcade game designed to be played with a single tap, so anyone can pick it up in seconds." },
     { what: "a mystery game in a museum at night", detail: "Explore a museum after closing time, examine exhibits and solve who moved the ancient manuscript, using clues hidden in real artefacts." },
     { what: "a city-building game around an oasis", detail: "Grow a settlement around a desert oasis, balancing water use, farms and trade, with every decision affecting the next generation." },
+    { what: "a stealth game in a Samarkand bazaar", detail: "Sneak between stalls of dried fruit and spices to return a stolen carpet before the bazaar closes, hiding in crowds and behind carts." },
+    { what: "a racing game on the Tashkent ring road", detail: "Arcade racing through a stylised Tashkent at night, with routes past the TV tower and Amir Temur Square and shortcuts through mahallas." },
+    { what: "a tower defence game at a fortress gate", detail: "Defend the gates of an old fortress with archers, walls and traps, wave after wave, with each tower based on a real piece of local architecture." },
+    { what: "a deck-building game about Silk Road traders", detail: "Build a deck of goods, camels and contacts, then trade your way from Kashgar to Bukhara before your rivals do." },
+    { what: "an endless runner through the Tashkent metro", detail: "Run through metro stations modelled on the real ones, with their chandeliers and mosaics, dodging closing doors and rush-hour crowds." },
+    { what: "a point-and-click adventure in Itchan Kala", detail: "Explore the walled old town of Khiva, talk to its residents and solve the puzzle of a missing minaret tile." },
+    { what: "a co-op puzzle game for two phones", detail: "Two players see different halves of the same room on their own phones and have to talk to each other to escape." },
+    { what: "a farming game with a real Uzbek calendar", detail: "Plant, water and harvest crops by the real seasons of the Fergana Valley, and sell at the weekly market in time for Navruz." },
+    { what: "a falconry game in the mountains", detail: "Train a falcon above the Chimgan mountains: read the wind, time your release and bring it back safely before dusk." },
+    { what: "a music game with a virtual doira", detail: "Play the doira on your phone's touchscreen, follow traditional rhythms and unlock new songs recorded with local musicians." },
+    { what: "a physics puzzle about building bridges", detail: "Build wooden bridges across mountain rivers with a limited budget, and watch a caravan test every one of them." },
+    { what: "a pixel-art adventure about a school trip", detail: "A short story game about a class trip to Samarkand, told in pixel art, where every choice changes how the day ends." },
+    { what: "an arcade game about catching falling apricots", detail: "Catch ripe apricots before they hit the ground in a Fergana orchard. Simple to learn, hard to master, and made for one hand." },
+    { what: "a strategy game about running a teahouse", detail: "Run a chaikhana: buy tea and bread, seat guests, keep the samovar hot and grow from a single table to a busy teahouse." },
+    { what: "a hidden-object game in a carpet workshop", detail: "Find patterns, tools and threads hidden in a Bukhara carpet workshop, and learn what each traditional motif means." },
+    { what: "a multiplayer quiz about Uzbekistan", detail: "Up to eight players answer questions about cities, food, history and music on their phones, with the host screen on a projector." },
+    { what: "a sailing game on the old Aral Sea", detail: "Sail the Aral Sea as it was in the 1960s, then return to the same places today. A short game about change, made with care." },
+    { what: "a horror game in an abandoned observatory", detail: "Explore an abandoned observatory at night with only a lantern, and piece together what the last astronomer discovered." },
+    { what: "a sports game based on kupkari", detail: "A fast, cartoonish take on the traditional horseback game, with simple controls and matches that last two minutes." },
+    { what: "a roguelike in desert ruins", detail: "Every run through the ruins is different. Collect relics, avoid sandstorms and decide whether to dig deeper or head home." },
+    { what: "a calm game about restoring tiles", detail: "Restore the blue tilework of an old madrasa piece by piece, matching colours and patterns. No timer, no score, just patterns." },
+    { what: "an educational game about the solar system", detail: "Fly a small probe from planet to planet, collect facts and answer short quizzes, inspired by Ulugh Beg's star catalogue." },
+  
+    { what: "a snowboarding game on Amirsoy slopes", detail: "Carve down mountain slopes, land tricks and race friends' ghost runs, with tracks modelled on the resort's real runs." },
+    { what: "a card game about Navruz traditions", detail: "Collect cards for sumalak, kok somsa and spring games, and complete the festival table before the other players." },
+    { what: "a top-down shooter in a sci-fi Samarkand", detail: "Defend a future Samarkand where the domes are solar collectors, with twin-stick controls that also work on a gamepad." },
+    { what: "a typing game for learning Latin-script Uzbek", detail: "Type words before they reach the city gates. The levels follow the Latin alphabet, letter by letter, with sounds for each word." },
+    { what: "a management game about a mahalla market", detail: "Plan the stalls of a small weekly market, keep sellers and buyers happy and decide where the new tea stall should go." },
+    { what: "a racing game with donkey carts", detail: "A light-hearted race through village lanes with carts full of melons, where every bump costs you part of the load." },
+    { what: "a gravity puzzle in a space station", detail: "Flip gravity to guide a small robot through a space station, one room at a time, with 30 hand-made levels." },
+    { what: "a memory game with suzani patterns", detail: "Match pairs of embroidered suzani motifs, with each pair explaining the meaning of the pattern once you find it." },
+    { what: "a survival game in the Kyzylkum desert", detail: "Find water, shade and a way home across the Kyzylkum desert, with a day and night cycle that changes what is safe." },
+    { what: "a stealth game in a museum heist", detail: "Return stolen artefacts to a museum without being seen, planning your route around guards, cameras and creaky floors." },
+    { what: "a two-player boxing game", detail: "A quick local multiplayer boxing game for one keyboard, with simple controls and rounds that last thirty seconds." },
+    { what: "a puzzle game about drawing lines of light", detail: "Bend beams of light with mirrors and prisms to light every lamp in a room, inspired by the patterns of girih tiles." },
   ],
   ctf: [
     { what: "write-up and fixes for the web tasks", detail: "We solved six of the eight web tasks, including the SQL injection in the login form and the insecure file upload. The write-up explains each exploit and the fix we would apply." },
@@ -465,6 +513,19 @@ export const THEME_IDEAS: Record<Theme, { what: string; detail: string }[]> = {
     { what: "a digital archive of old photographs", detail: "Residents upload old family photos of their city, and the archive places them on a map next to the same street today." },
     { what: "crowd forecasts for heritage sites", detail: "See when each site is least busy and plan a visit around it. Site managers get forecasts to plan staff." },
     { what: "a translator for guides and visitors", detail: "Guides speak Uzbek or Russian, and visitors hear the translation in their own language through their phones." },
+    { what: "an offline map of Bukhara's old town", detail: "A map that works without a connection, with every madrasa, caravanserai and trading dome marked and a short story for each." },
+    { what: "a booking app for craft workshops", detail: "Visitors book a two-hour pottery, silk or embroidery class with a local master, and pay online before they arrive." },
+    { what: "QR stories for monuments", detail: "Small QR plaques at each monument open a short story in five languages, written with historians and read by local actors." },
+    { what: "a guide marketplace for licensed guides", detail: "Visitors compare licensed guides by language, price and reviews, and book a tour for the next morning in a few taps." },
+    { what: "a 3D scan archive of carved doors", detail: "We scanned carved wooden doors in the old town and published them as 3D models, so restorers and students can study them." },
+    { what: "accessible routes for heritage sites", detail: "Routes through each site that avoid stairs and steep paths, with notes on ramps, benches and shade, tested with wheelchair users." },
+    { what: "a food trail through the old city", detail: "A walking food trail with stops for samsa, plov and green tea, and short notes about where each dish comes from." },
+    { what: "souvenir authenticity checks", detail: "Craftspeople register their work with a photo and a code, so visitors can check that a suzani or a ceramic plate is handmade." },
+    { what: "a heritage quiz for school groups", detail: "Teachers run a quiz trail around a heritage site, and students answer questions on their phones as they walk." },
+    { what: "a visitor feedback tool for site managers", detail: "Visitors rate cleanliness, signs and guides in one tap, and site managers see what to fix first on a weekly report." },
+    { what: "train and taxi connections for tourists", detail: "Plan a day trip between Samarkand, Bukhara and Khiva with train times, taxi prices and the walk from each station." },
+    { what: "audio stories from local elders", detail: "Recorded memories of older residents about their streets and crafts, played when a visitor walks past the place they describe." },
+  
   ],
   commerce: [
     { what: "a catalogue builder from phone photos", detail: "Sellers photograph their products, and the app removes the background, suggests a title and price, and publishes the listing." },
@@ -495,24 +556,125 @@ export const THEME_IDEAS: Record<Theme, { what: string; detail: string }[]> = {
     { what: "smart bins that report when they are full", detail: "Ultrasonic sensors in public bins report fill levels, and the collection route is planned around the full ones." },
     { what: "energy monitoring for small shops", detail: "A clamp sensor on the main cable shows a shop owner which appliances use the most electricity and when." },
     { what: "a parcel locker prototype", detail: "A locker with a keypad and a phone app: the courier drops the parcel, and the customer opens the door with a one-time code." },
+    { what: "a cold-chain tracker for pharmacies", detail: "A small sensor in each medicine fridge logs the temperature and sends an alert before vaccines or insulin get too warm." },
+    { what: "a smart lock for dormitory rooms", detail: "Students open their dormitory room with a phone or a card, and the dormitory office can grant guest access for a day." },
+    { what: "a beehive monitor for beekeepers", detail: "Weight, temperature and sound sensors in the hive tell a beekeeper when the colony is healthy and when to harvest." },
+    { what: "a noise monitor for apartment blocks", detail: "Sensors in stairwells measure noise at night, and the building chat gets a polite reminder when it is too loud." },
+    { what: "an elevator fault reporter", detail: "A sensor kit for old elevators that detects stops between floors and door faults, and reports them to the maintenance company." },
+    { what: "a solar panel cleaning reminder", detail: "Light sensors next to each panel spot when dust is cutting output, so the owner knows exactly when to clean." },
+    { what: "a fall detector for older people", detail: "A small wearable notices a fall and calls a family member, with a button to cancel the alarm if everything is fine." },
+    { what: "a bus stop arrival display", detail: "A low-cost e-ink display for bus stops that shows when the next buses will arrive, powered by a small solar panel." },
+    { what: "smart irrigation valves for courtyards", detail: "Valves on courtyard garden hoses open at the right time of day and skip watering when the soil is already moist." },
+    { what: "a fridge door alarm for small shops", detail: "A sensor beeps and sends a message when a shop's drinks fridge is left open, saving electricity in the summer." },
+  
   ],
 };
 
-/** Product names for project titles ("Navbat: online queue for …"). */
-export const PRODUCT_NAMES = [
-  "Navbat", "Hisob", "Daftar", "Bozorchi", "Ustoz", "Sog'lom", "Yordam",
-  "Kuzat", "Sayyoh", "Dala", "Suv", "Quyosh", "Ko'prik", "Manzil", "Taqvim",
-  "Bilim", "Kitobxon", "Hamyon", "Tanga", "Kassa", "Ombor", "Karvon",
-  "Zarafshon", "Chorsu", "Lochin", "Burgut", "Oqim", "Mezon", "Nishon",
-  "Ziyo", "Tong", "Shaffof", "Ovoz", "Raqam", "Hamkor", "Qadam", "Orzu",
-  "Ishonch", "Bekat", "Yo'nalish", "Pulse", "Atlas", "Compass", "Beacon",
-  "Mosaic", "Lantern", "Relay", "Harvest", "Orbit", "Vertex", "Kite",
-  "Prism", "Anchor", "Canvas", "Ledger", "Sprout", "Bridge", "Echo",
-  "Nimbus", "Tandem", "Waypoint", "Meridian", "Keystone", "Spark", "Tumaris",
-  "Samarqand", "Ipak", "Yulduz", "Shamol", "Bahor", "Gulzor", "Mehr",
-  "Saodat", "Tayanch", "Chiroq", "Qalqon", "Kompas", "Uyim", "Safar",
-  "Mahalla+", "Darvoza", "Minor", "Bog'bon", "Tez", "Aqlli", "Birga",
-  "Nur", "Kelajak", "Ravon", "Sifat",
+/** CTF write-ups: category × deliverable, so every team's title differs. */
+export const CTF_CATEGORIES = [
+  "web", "cryptography", "forensics", "OSINT", "reverse engineering",
+  "binary exploitation", "mobile", "cloud", "network",
+] as const;
+export const CTF_DELIVERABLES = [
+  { what: "{cat} write-up with fixes", detail: "Solutions for the {cat} tasks we solved, each with the vulnerability behind it and the patch we would ship." },
+  { what: "{cat} detection rules", detail: "For every {cat} task we solved, a detection rule or log query that would have caught the attack in production." },
+  { what: "{cat} hardening checklist", detail: "A short checklist developers can follow to avoid the {cat} mistakes we exploited, with an example for each item." },
+  { what: "a beginner's guide to the {cat} tasks", detail: "Step-by-step walkthroughs of the {cat} tasks for first-time players, written so a student can follow them without CTF experience." },
+];
+
+/**
+ * When an event has more submissions than its theme has ideas, it draws from
+ * these related themes next, so no idea repeats within an event.
+ */
+export const RELATED_THEMES: Record<Theme, Theme[]> = {
+  ai: ["edtech", "health", "commerce", "govtech"],
+  fintech: ["commerce", "social", "govtech", "ai"],
+  govtech: ["mobility", "social", "climate", "edtech"],
+  edtech: ["social", "ai", "govtech", "health"],
+  health: ["social", "ai", "iot", "climate"],
+  game: [],
+  ctf: [],
+  agri: ["climate", "iot", "commerce", "fintech"],
+  climate: ["iot", "agri", "mobility", "govtech"],
+  mobility: ["govtech", "commerce", "climate", "heritage"],
+  heritage: ["commerce", "mobility", "edtech"],
+  commerce: ["fintech", "mobility", "agri", "ai"],
+  social: ["health", "edtech", "govtech", "ai"],
+  iot: ["climate", "agri", "mobility"],
+};
+
+/**
+ * Product names for project titles ("Navbat: online queue for …"). An Uzbek
+ * word is only used where its meaning fits the idea's theme; `null` fits any.
+ */
+export const PRODUCTS: { name: string; themes: Theme[] | null }[] = [
+  { name: "Navbat", themes: ["health", "govtech"] }, // queue
+  { name: "Hisob", themes: ["fintech", "commerce"] }, // account
+  { name: "Daftar", themes: ["edtech"] }, // notebook
+  { name: "Bozorchi", themes: ["commerce", "agri"] }, // shopper
+  { name: "Ustoz", themes: ["edtech", "ai"] }, // teacher
+  { name: "Sog'lom", themes: ["health"] }, // healthy
+  { name: "Yordam", themes: ["social", "health", "govtech"] }, // help
+  { name: "Kuzat", themes: ["iot", "climate", "mobility", "ctf"] }, // watch
+  { name: "Sayyoh", themes: ["heritage"] }, // traveller
+  { name: "Dala", themes: ["agri"] }, // field
+  { name: "Suv", themes: ["agri", "climate", "iot"] }, // water
+  { name: "Quyosh", themes: ["climate", "iot"] }, // sun
+  { name: "Ko'prik", themes: null }, // bridge
+  { name: "Manzil", themes: ["mobility", "commerce", "heritage"] }, // address
+  { name: "Taqvim", themes: ["edtech", "health", "govtech"] }, // calendar
+  { name: "Bilim", themes: ["edtech", "ai"] }, // knowledge
+  { name: "Kitobxon", themes: ["edtech"] }, // reader
+  { name: "Hamyon", themes: ["fintech"] }, // wallet
+  { name: "Tanga", themes: ["fintech", "game"] }, // coin
+  { name: "Kassa", themes: ["fintech", "commerce"] }, // till
+  { name: "Ombor", themes: ["commerce", "agri"] }, // warehouse
+  { name: "Karvon", themes: ["game", "heritage", "commerce", "mobility"] }, // caravan
+  { name: "Chorsu", themes: ["commerce", "heritage"] }, // Tashkent's bazaar
+  { name: "Lochin", themes: null }, // falcon
+  { name: "Burgut", themes: null }, // eagle
+  { name: "Oqim", themes: null }, // stream
+  { name: "Mezon", themes: null }, // measure
+  { name: "Nishon", themes: ["ctf", "game"] }, // target
+  { name: "Ziyo", themes: ["edtech"] }, // enlightenment
+  { name: "Tong", themes: null }, // dawn
+  { name: "Shaffof", themes: ["fintech", "govtech", "social"] }, // transparent
+  { name: "Ovoz", themes: ["ai", "govtech", "social"] }, // voice
+  { name: "Raqam", themes: null }, // digit
+  { name: "Hamkor", themes: null }, // partner
+  { name: "Qadam", themes: ["health", "edtech", "mobility"] }, // step
+  { name: "Orzu", themes: ["social", "game"] }, // dream
+  { name: "Ishonch", themes: ["fintech", "social", "ctf"] }, // trust
+  { name: "Bekat", themes: ["mobility"] }, // stop
+  { name: "Yo'nalish", themes: ["mobility", "heritage"] }, // direction
+  { name: "Samarqand", themes: ["heritage"] },
+  { name: "Ipak", themes: ["heritage", "commerce"] }, // silk
+  { name: "Yulduz", themes: null }, // star
+  { name: "Shamol", themes: ["climate"] }, // wind
+  { name: "Bahor", themes: ["climate", "agri"] }, // spring
+  { name: "Gulzor", themes: ["agri", "climate"] }, // flower garden
+  { name: "Mehr", themes: ["social", "health"] }, // kindness
+  { name: "Tayanch", themes: ["social", "health"] }, // support
+  { name: "Chiroq", themes: ["climate", "iot"] }, // lamp
+  { name: "Qalqon", themes: ["ctf"] }, // shield
+  { name: "Uyim", themes: ["iot", "commerce"] }, // my home
+  { name: "Safar", themes: ["mobility", "heritage"] }, // trip
+  { name: "Mahalla+", themes: ["govtech", "social"] },
+  { name: "Darvoza", themes: ["govtech", "ctf", "heritage"] }, // gate
+  { name: "Minor", themes: ["heritage"] }, // minaret
+  { name: "Bog'bon", themes: ["agri"] }, // gardener
+  { name: "Tez", themes: ["commerce", "mobility"] }, // fast
+  { name: "Aqlli", themes: ["iot", "ai"] }, // smart
+  { name: "Birga", themes: ["social", "fintech"] }, // together
+  { name: "Kelajak", themes: null }, // future
+  { name: "Sifat", themes: null }, // quality
+  ...[
+    "Pulse", "Atlas", "Compass", "Beacon", "Mosaic", "Lantern", "Relay",
+    "Harvest", "Orbit", "Vertex", "Kite", "Prism", "Anchor", "Canvas",
+    "Ledger", "Sprout", "Bridge", "Echo", "Nimbus", "Tandem", "Waypoint",
+    "Meridian", "Keystone", "Spark", "Tumaris", "Nova", "Summit", "Signal",
+    "Fable", "Quest", "Pixel", "Arcade", "Nomad", "Zenith", "Cipher",
+  ].map((name) => ({ name, themes: null })),
 ];
 
 /** Team names. Combined with ADJECTIVES × NOUNS when an event needs more. */

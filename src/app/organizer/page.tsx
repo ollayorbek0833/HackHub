@@ -21,9 +21,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { eventImageUrl } from "@/lib/uploads/url";
 
-// docs/08 > /organizer "Events I run": every event, not only the ones this
-// organizer created, with its state at a glance, filtered by the tabs All /
-// Live / Upcoming / Judging / Finished (?status=, server-side). The title and
+// docs/08 > /organizer "Events I run": the events this organizer created,
+// with their state at a glance, filtered by the tabs All / Live / Upcoming /
+// Judging / Finished (?status=, server-side). Only the list is personal: any
+// organizer can still open and manage any event by its URL. The title and
 // primary action are static; searchParams and the list are read inside
 // Suspense (Cache Components).
 
@@ -80,11 +81,12 @@ const EMPTY: Record<
 async function EventList({
   searchParams,
 }: Pick<PageProps<"/organizer">, "searchParams">) {
-  await requireRole("ORGANIZER");
+  const user = await requireRole("ORGANIZER");
   const filter = parseStatusFilter((await searchParams).status);
 
   const [events, submitted] = await Promise.all([
     prisma.event.findMany({
+      where: { createdById: user.id },
       orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
@@ -99,10 +101,14 @@ async function EventList({
         _count: { select: { registrations: true, teams: true } },
       },
     }),
-    // Submissions per event: one row per team that has submitted.
+    // Submissions per event of this organizer: one row per team that has
+    // submitted.
     prisma.team.groupBy({
       by: ["eventId"],
-      where: { submission: { isNot: null } },
+      where: {
+        submission: { isNot: null },
+        event: { createdById: user.id },
+      },
       _count: { _all: true },
     }),
   ]);

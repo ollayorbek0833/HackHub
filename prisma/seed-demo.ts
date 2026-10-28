@@ -13,6 +13,9 @@
 //   for the first team only.
 // - "Open Hack · live": registration and submissions open, nobody registered,
 //   no teams and no criteria.
+// - "Second Hack · upcoming": created by organizer2@hackhub.test, a second
+//   organizer, and still closed. "Events I run" lists only the events an
+//   organizer created, so each organizer sees a different list.
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { z } from "zod";
@@ -86,9 +89,12 @@ type DemoUser = {
   profile?: (typeof PROFILES)[number];
 };
 
-/** seed.ts's demo users, plus a second judge and participants 4 to 8. */
+const ORGANIZER2 = "organizer2@hackhub.test";
+
+/** seed.ts's demo users, plus a second organizer, a second judge and participants 4 to 8. */
 const USERS: DemoUser[] = [
   ...DEMO_USERS,
+  { email: ORGANIZER2, role: "ORGANIZER" as const },
   { email: "judge2@hackhub.test", role: "JUDGE" as const },
   ...[4, 5, 6, 7, 8].map((n) => ({
     email: PARTICIPANT(n),
@@ -359,6 +365,20 @@ async function main() {
   await prisma.team.deleteMany({ where: { eventId: openId } });
   await prisma.eventRegistration.deleteMany({ where: { eventId: openId } });
   await prisma.criterion.deleteMany({ where: { eventId: openId } });
+
+  // Second Hack · upcoming: the second organizer's own event, closed and in
+  // the future, so it's on their "Events I run" and not on the first one's.
+  const secondId = await upsertEvent("Second Hack · upcoming", {
+    description:
+      "A hackathon another organizer is preparing. Registration isn't open yet.",
+    startDate: new Date("2026-12-05T00:00:00.000Z"),
+    endDate: new Date("2026-12-06T00:00:00.000Z"),
+    registrationOpen: false,
+    submissionsOpen: false,
+    createdById: userId[ORGANIZER2],
+  });
+  await prisma.team.deleteMany({ where: { eventId: secondId } });
+  await prisma.eventRegistration.deleteMany({ where: { eventId: secondId } });
 }
 
 main()

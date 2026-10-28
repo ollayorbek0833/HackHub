@@ -87,7 +87,8 @@ npx prisma migrate reset --force && npx prisma db seed && npm run db:seed:demo
 
 | Account | Role | Password |
 |---|---|---|
-| `SEED_ORGANIZER_EMAIL` | Organizer | `SEED_ORGANIZER_PASSWORD` |
+| `SEED_ORGANIZER_EMAIL` | Organizer (created Demo Hack and Open Hack) | `SEED_ORGANIZER_PASSWORD` |
+| `organizer2@hackhub.test` | Organizer (created Second Hack) | `SEED_DEMO_PASSWORD` |
 | `judge@hackhub.test` | Judge (has scored Null Pointers) | `SEED_DEMO_PASSWORD` |
 | `judge2@hackhub.test` | Judge (nothing scored) | `SEED_DEMO_PASSWORD` |
 | `participant1..4@hackhub.test` | Participant, team Null Pointers (submitted) | `SEED_DEMO_PASSWORD` |
@@ -95,9 +96,10 @@ npx prisma migrate reset --force && npx prisma db seed && npm run db:seed:demo
 | `participant7@hackhub.test` | Participant, team Lone Wolf (no submission) | `SEED_DEMO_PASSWORD` |
 | `participant8@hackhub.test` | Participant, registered, no team | `SEED_DEMO_PASSWORD` |
 
-Events: **Demo Hack · judging** (registration and submissions closed, ready for judging and publishing) and
-**Open Hack · live** (registration and submissions open, no teams). Running the demo seed again puts both events
-back in this state. Never run it in production.
+Events: **Demo Hack · judging** (registration and submissions closed, ready for judging and publishing),
+**Open Hack · live** (registration and submissions open, no teams) and **Second Hack · upcoming** (organizer2's, still
+closed). Each organizer's Events I run lists only their own. Running the demo seed again puts the events back in this
+state. Never run it in production.
 
 ## Production deployment (VPS + Docker)
 

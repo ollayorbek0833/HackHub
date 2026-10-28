@@ -225,7 +225,7 @@ are open, and update it until they close.
 **Steps:**
 
 1. Open **Events I run**. The tabs **All**, **Live**, **Upcoming**, **Judging** and **Finished** filter the list, each with
-   its count (an event whose dates passed without opening counts as Finished). It lists every event with its dates, its status (registration and submissions open or
+   its count (an event whose dates passed without opening counts as Finished). It lists the events you created with their dates, their status (registration and submissions open or
    closed) and how many people registered, how many teams formed and how many submitted.
 2. Select **New event**. Enter the name, a description, the start and end dates, and the maximum team size. Each
    field is checked as soon as you leave it, and a message under it says what to fix; it goes away as you correct it.

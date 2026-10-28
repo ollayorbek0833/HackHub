@@ -24,7 +24,9 @@ const MAX_EVENTS = 12;
 export async function EventChip({ event }: { event: EventChipEvent }) {
   const user = await getCurrentUser();
 
-  // Each role's events, newest first. Visitors get a chip without a menu.
+  // Each role's events, newest first: a participant's registrations, the
+  // events a judge can score, the events an organizer created (the same list
+  // as "Events I run"). Visitors get a chip without a menu.
   let rows: {
     id: string;
     name: string;
@@ -53,7 +55,7 @@ export async function EventChip({ event }: { event: EventChipEvent }) {
           ? { registrations: { some: { userId: user.id } } }
           : user.role === "JUDGE"
             ? { teams: { some: { submission: { isNot: null } } } }
-            : {},
+            : { createdById: user.id },
       orderBy: [{ startDate: "desc" }, { name: "asc" }],
       take: MAX_EVENTS,
       select,

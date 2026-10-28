@@ -593,8 +593,9 @@ npx shadcn@latest add input label textarea field select switch badge table tabs 
 | `/organizer/**` | `requireRole("ORGANIZER")` on every page | every action: `requireRole("ORGANIZER")` |
 | `/organizer/users` | `requireRole("ORGANIZER")` | change role: target not on a team, not an organizer (Decision 11) |
 
-Participants see their own team's submission on the team page (Decision 12). `/organizer` lists every event, matching the UI spec: docs/03 has no per-event ownership rule, so
-organizer actions check the role only. `createdById` is kept for the record (and a "Created by" column), not for access.
+Participants see their own team's submission on the team page (Decision 12). `/organizer` lists only the events the signed-in organizer created (`createdById`), and so does an
+organizer's event chip menu. That's a view, not access: docs/03 has no per-event ownership rule, so organizer pages and
+actions check the role only, and any organizer can open and manage any event by its URL.
 
 ### Testing
 

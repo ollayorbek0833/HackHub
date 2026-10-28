@@ -290,8 +290,9 @@ show under the field. Errors that aren't about one field show above the form.
 
 #### `/organizer` Events I run (O1, #9)
 
-- **Purpose.** The organizer's home: every event, with its state at a glance.
-- **Who.** Organizer. Shows all events, not only the ones this organizer created.
+- **Purpose.** The organizer's home: the events this organizer created, with their state at a glance.
+- **Who.** Organizer. Shows only the events this organizer created; the tab counts and the event chip's switch menu
+  count the same events. Any organizer can still open and manage any event by its URL.
 - **Data, per event.** Name, dates, status badges, registered participants, teams, submissions.
 - **Layout.** The same event card as `/events` (banner, overlapping logo); the whole card opens the event.
 - **Actions.** Primary: "New event" → `/organizer/events/new`. Open an event → `/organizer/events/[eventId]`.

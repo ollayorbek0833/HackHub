@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { LogoMark } from "@/components/brand/logo";
+import { HardRedirect } from "@/components/auth/hard-redirect";
 import { LoginForm } from "@/components/auth/login-form";
 import {
   Card,
@@ -24,12 +24,15 @@ export const metadata = pageMetadata({
 
 // docs/08 > /login. Open to everyone; a signed-in user goes to their role home
 // (the proxy does this too, from the JWT; this check reads the database).
+// The proxy handles a page load; a client-side visit (a tab still showing the
+// signed-out header) gets here and leaves with a full load, which re-renders
+// the header and tab bar (components/auth/hard-redirect).
 // Rendered under (auth)/loading.tsx, so reading the session here is fine.
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // Auth.js uses randomness before it reads the request: opt out of prerendering.
   await connection();
   const user = await getCurrentUser();
-  if (user) redirect(ROLE_HOME[user.role]);
+  if (user) return <HardRedirect href={ROLE_HOME[user.role]} />;
 
   const { callbackUrl } = await searchParams;
 

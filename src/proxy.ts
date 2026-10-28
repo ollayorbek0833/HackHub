@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { ROLE_HOME } from "@/lib/auth/permissions";
-import { isAuthPath, isProtectedPath } from "@/lib/auth/redirects";
+import {
+  isAuthPath,
+  isPageLoad,
+  isProtectedPath,
+} from "@/lib/auth/redirects";
 import { withoutSessionCookie } from "@/lib/auth/session-cookie";
 
 // Optimistic redirects only (docs/07 > What src/proxy.ts may and may not do).
@@ -19,7 +23,11 @@ const redirects = auth((req) => {
     return NextResponse.redirect(login);
   }
 
-  if (signedIn && isAuthPath(pathname)) {
+  // Page loads only. A client-side visit keeps the root layout, so a tab still
+  // showing the signed-out header would keep it over the signed-in home (or
+  // show a blank page from a stale prefetch). The page sends those on with a
+  // full load instead (components/auth/hard-redirect).
+  if (signedIn && isAuthPath(pathname) && isPageLoad(req.headers)) {
     const role = req.auth?.user?.role;
     return NextResponse.redirect(
       new URL(role ? ROLE_HOME[role] : "/", req.nextUrl),

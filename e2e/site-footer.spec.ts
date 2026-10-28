@@ -11,7 +11,7 @@ const REPO = "https://github.com/ollayorbek0833/HackHub";
 const COLUMNS: Record<string, [string, string][]> = {
   Product: [
     ["Events", "/events"],
-    ["Run a hackathon", "/register"],
+    ["Run a hackathon", "/contact#run-an-event"],
     ["Log in", "/login"],
     ["Register", "/register"],
   ],

@@ -1,0 +1,65 @@
+/* Landing > Fair judging: the worked example's entrance, played once as it
+   scrolls into view (DESIGN.md > Motion).
+
+   DrawIn (./draw-in) sets data-draw="idle" on an item that starts below the
+   fold, then "done" when it enters. Everything here is keyed off those values
+   and sits under prefers-reduced-motion: no-preference, so without
+   JavaScript, without IntersectionObserver, with reduced motion, or for an
+   item already on screen at load, nothing is hidden and nothing moves: the
+   bars are full and the points are in place.
+
+   Stagger: --i is the item's position (the team's rank order, or the point's
+   order). Two stagger steps (90 ms) apart, so the three teams read as one
+   after another. Every animation is 400 ms (--duration-slow), ease-out-expo,
+   once; nothing loops. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The three principle points rise in. */
+  .point[data-draw="idle"] {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  .point[data-draw="done"] {
+    transition:
+      opacity var(--duration-slow)
+        var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+      transform var(--duration-slow)
+        var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+    transition-delay: calc(var(--i, 0) * 2 * var(--stagger-step));
+  }
+
+  /* Each team's points bar fills from 0 to its total. */
+  .card[data-draw="idle"] .fill {
+    transform: scaleX(0);
+  }
+  .card[data-draw="done"] .fill {
+    transition: transform var(--duration-slow)
+      var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+    transition-delay: calc(var(--i, 0) * 2 * var(--stagger-step));
+  }
+
+  /* The leader's rank glows amber once, as its bar finishes. */
+  .card[data-draw="done"] .leaderGlow {
+    animation: leader-glow var(--duration-slow)
+      var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+    animation-delay: calc(
+      var(--i, 0) * 2 * var(--stagger-step) + var(--duration-base)
+    );
+  }
+}
+
+.fill {
+  transform-origin: left;
+}
+
+@keyframes leader-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  40% {
+    filter: drop-shadow(
+      0 0 0.375rem color-mix(in oklab, var(--primary) 75%, transparent)
+    );
+  }
+}

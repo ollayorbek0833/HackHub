@@ -1,5 +1,10 @@
-import { CalculatorIcon, ScaleIcon, TrophyIcon, UsersIcon } from "lucide-react";
+"use client";
 
+import { CalculatorIcon, ScaleIcon, TrophyIcon, UsersIcon } from "lucide-react";
+import { useSyncExternalStore, type CSSProperties } from "react";
+
+import { CountUp } from "@/components/feedback/count-up";
+import { DrawIn } from "@/components/landing/draw-in";
 import { LandingSection } from "@/components/landing/section";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,12 +15,21 @@ import {
 } from "@/lib/domain/ranking";
 import { cn } from "@/lib/utils";
 
+import styles from "./fair-judging.module.css";
+
 // Landing > Fair judging (agent-briefs/landing.md, PRODUCT.md > Product
 // Principles: "the rules are explicit, the weights add up, and the ranking can
 // be explained"). Three short points, then a small worked example marked
 // "Example". The example's totals and ranks come from the app's own rankTeams
 // (lib/domain/ranking) on the static sample below, at render time, so the
 // landing page can't drift from how a real ranking is computed.
+//
+// Motion, once, as the example scrolls into view, and only with motion allowed:
+// the three points rise in; each team's total counts up (CountUp) and its
+// points bar fills, team after team in rank order; the leader's rank glows
+// amber once. The server renders every final value and every full bar, so the
+// section is complete without JavaScript, without IntersectionObserver and
+// with reduced motion (see fair-judging.module.css, DrawIn and CountUp).
 
 type ExampleCriterion = RankCriterion & { name: string };
 type ExampleTeam = RankTeam & { name: string };
@@ -134,45 +148,119 @@ const LAST = "pr-3 sm:pr-4";
 const CELL = "py-2 pl-2 text-right whitespace-nowrap sm:pl-3";
 /** A judge's column: centred under its header, so it never crowds "Avg". */
 const JUDGE_CELL = "py-2 pl-2 text-center whitespace-nowrap sm:pl-3";
+/** One amber step per criterion, in CRITERIA order: its share of the bar. */
+const SEGMENT = ["bg-primary", "bg-primary/60", "bg-primary/30"];
+const segment = (k: number) => SEGMENT[k % SEGMENT.length];
 
-function TeamCard({ entry }: { entry: FairJudgingTeam }) {
+/** The stagger position, read by fair-judging.module.css. */
+const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
+
+const subscribeNever = () => () => {};
+/** CountUp needs IntersectionObserver; without it the total stays static. */
+function useCanCount() {
+  return useSyncExternalStore(
+    subscribeNever,
+    () => typeof IntersectionObserver !== "undefined",
+    () => false,
+  );
+}
+
+/** A team's total: counts up once in view and always ends on the exact value. */
+function Total({ value }: { value: number }) {
+  const canCount = useCanCount();
+  return canCount ? (
+    <CountUp value={value} decimals={1} />
+  ) : (
+    <>{oneDecimal(value)}</>
+  );
+}
+
+/** The total out of 100 as a bar, one segment per criterion's points. */
+function PointsBar({ entry }: { entry: FairJudgingTeam }) {
+  return (
+    <div
+      aria-hidden
+      className="mt-3 h-1.5 overflow-hidden rounded-full bg-foreground/10"
+    >
+      <div
+        data-points-fill
+        className={cn(styles.fill, "flex h-full gap-px")}
+        style={{ width: `${entry.total}%` }}
+      >
+        {entry.rows.map((row, k) => (
+          <span
+            key={row.criterion.id}
+            className={cn("h-full", segment(k))}
+            style={{ flex: `${row.points} 1 0` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TeamCard({
+  entry,
+  index,
+}: {
+  entry: FairJudgingTeam;
+  /** Position in rank order, for the stagger. */
+  index: number;
+}) {
   const leader = entry.rank === 1;
   const headingId = `fair-judging-${entry.team.id}`;
   return (
     <li
+      data-draw-item
+      style={stagger(index)}
       className={cn(
+        styles.card,
         "flex min-w-0 flex-col rounded-xl border bg-card text-card-foreground",
         leader && "border-primary/45 bg-primary/10",
       )}
     >
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <span
-          className={cn(
-            "inline-flex w-9 shrink-0 items-center gap-1 text-xl font-semibold",
-            NUM,
-            leader ? "text-primary" : "text-primary/70",
-          )}
-        >
-          <span className="sr-only">Rank </span>
-          {entry.rank}
-          {leader && (
-            <TrophyIcon
-              role="img"
-              aria-label="Leader"
-              className="size-4 text-live"
-            />
-          )}
-        </span>
-        <h4 id={headingId} className="min-w-0 flex-1 font-semibold break-words">
-          {entry.team.name}
-        </h4>
-        <p className="shrink-0 text-right whitespace-nowrap">
-          <span className="sr-only">Total </span>
-          <span className={cn("text-2xl font-semibold", NUM)}>
-            {oneDecimal(entry.total)}
+      <div className="border-b px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "inline-flex w-9 shrink-0 items-center gap-1 text-xl font-semibold",
+              NUM,
+              leader ? "text-primary" : "text-primary/70",
+              leader && styles.leaderGlow,
+            )}
+          >
+            <span className="sr-only">Rank </span>
+            {entry.rank}
+            {leader && (
+              <TrophyIcon
+                role="img"
+                aria-label="Leader"
+                className="size-4 text-live"
+              />
+            )}
           </span>
-          <span className="text-small text-muted-foreground"> / 100</span>
-        </p>
+          <h4
+            id={headingId}
+            className="min-w-0 flex-1 font-semibold break-words"
+          >
+            {entry.team.name}
+          </h4>
+          <p className="shrink-0 text-right whitespace-nowrap">
+            <span className="sr-only">Total </span>
+            {/* Four tabular figures wide, so counting up never shifts it. */}
+            <span
+              data-total
+              className={cn(
+                "inline-block min-w-[4ch] text-right text-2xl font-semibold",
+                NUM,
+              )}
+            >
+              <Total value={entry.total} />
+            </span>
+            <span className="text-small text-muted-foreground"> / 100</span>
+          </p>
+        </div>
+        <PointsBar entry={entry} />
       </div>
 
       <table
@@ -207,7 +295,7 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
           </tr>
         </thead>
         <tbody>
-          {entry.rows.map((row) => (
+          {entry.rows.map((row, k) => (
             <tr key={row.criterion.id} className="border-t">
               <th
                 scope="row"
@@ -216,7 +304,17 @@ function TeamCard({ entry }: { entry: FairJudgingTeam }) {
                 <span className="block break-words text-foreground">
                   {row.criterion.name}
                 </span>
-                <span className={cn("block text-muted-foreground", NUM)}>
+                <span
+                  className={cn(
+                    "flex items-center gap-1.5 text-muted-foreground",
+                    NUM,
+                  )}
+                >
+                  {/* This criterion's segment in the points bar above. */}
+                  <span
+                    aria-hidden
+                    className={cn("size-2 shrink-0 rounded-[2px]", segment(k))}
+                  />
                   {row.criterion.weightPercent}%
                 </span>
               </th>
@@ -259,15 +357,22 @@ export function FairJudging() {
       title="Judging that's visibly fair"
       intro="The rules are set before anyone scores, and every total in the ranking can be traced back to the judges' scores."
     >
-      <ul className="grid gap-6 md:grid-cols-3 md:gap-8">
-        {POINTS.map(({ icon: Icon, title, text }) => (
-          <li key={title} className="flex flex-col gap-2">
-            <Icon aria-hidden className="size-5 text-primary" />
-            <h3 className="font-semibold text-balance">{title}</h3>
-            <p className="text-pretty text-muted-foreground">{text}</p>
-          </li>
-        ))}
-      </ul>
+      <DrawIn>
+        <ul className="grid gap-6 md:grid-cols-3 md:gap-8">
+          {POINTS.map(({ icon: Icon, title, text }, i) => (
+            <li
+              key={title}
+              data-draw-item
+              style={stagger(i)}
+              className={cn(styles.point, "flex flex-col gap-2")}
+            >
+              <Icon aria-hidden className="size-5 text-primary" />
+              <h3 className="font-semibold text-balance">{title}</h3>
+              <p className="text-pretty text-muted-foreground">{text}</p>
+            </li>
+          ))}
+        </ul>
+      </DrawIn>
 
       <figure
         aria-labelledby="fair-judging-example"
@@ -314,14 +419,16 @@ export function FairJudging() {
           </p>
         </div>
 
-        <ol
-          aria-label="Example ranking, best first"
-          className="mt-6 grid gap-4 lg:grid-cols-3"
-        >
-          {example.map((entry) => (
-            <TeamCard key={entry.team.id} entry={entry} />
-          ))}
-        </ol>
+        <DrawIn className="mt-6">
+          <ol
+            aria-label="Example ranking, best first"
+            className="grid gap-4 lg:grid-cols-3"
+          >
+            {example.map((entry, i) => (
+              <TeamCard key={entry.team.id} entry={entry} index={i} />
+            ))}
+          </ol>
+        </DrawIn>
 
         <figcaption className="mt-4 text-small text-pretty text-muted-foreground">
           Sample teams and scores. The totals and ranks are computed by the same

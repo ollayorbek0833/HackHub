@@ -1,0 +1,27 @@
+/* Landing > For organizers: the one keyframe the shared motion tokens don't
+   have. The Command centre's phase dot gives a single soft pulse (a ring that
+   grows and fades) after its vignette has slid in. It only plays once DrawIn
+   has revealed the vignette (data-draw="done"), only with motion allowed, and
+   never repeats. Box-shadow and scale only, so nothing around it moves.
+   `.vignette` is the element DrawIn sets data-draw on. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .vignette[data-draw="done"] .pulse {
+    animation: phase-dot-pulse var(--duration-slow) var(--ease-out-expo) 200ms
+      both;
+  }
+}
+
+@keyframes phase-dot-pulse {
+  0% {
+    scale: 1;
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--live) 70%, transparent);
+  }
+  40% {
+    scale: 1.4;
+  }
+  100% {
+    scale: 1;
+    box-shadow: 0 0 0 0.5rem transparent;
+  }
+}

@@ -3,7 +3,7 @@ import { CheckIcon } from "lucide-react";
 
 import { EventAvatar } from "@/components/events/event-avatar";
 import { EventBanner } from "@/components/events/event-banner";
-import { PhaseLabel } from "@/components/events/phase-dot";
+import { PhaseDot } from "@/components/events/phase-dot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { describeWeightTotal, weightTotal } from "@/lib/domain/criteria";
+import { PHASE_LABEL } from "@/lib/domain/event-phase";
 import { nextStep, type EventProgress } from "@/lib/domain/event-readiness";
 import { cn } from "@/lib/utils";
 
+import { DrawIn } from "./draw-in";
+import styles from "./for-organizers.module.css";
 import { LandingSection } from "./section";
 
 // Landing > For organizers (landing plan, section 3): the command-centre story
@@ -29,6 +32,16 @@ import { LandingSection } from "./section";
 // and the "Next step" wording come from the same domain functions as the app,
 // so they can't drift from it. No amber buttons in here: the page's one amber
 // action is in the hero.
+//
+// Motion (motion-safe only, once each, nothing loops): as a vignette enters
+// view it slides in from its side and fades in, then the criteria bar fills,
+// the phase dot gives one soft pulse and the table rows fade in one by one.
+// DrawIn only hides a vignette once JavaScript can reveal it again, so without
+// JS, without IntersectionObserver, with reduced motion or on a very short
+// screen everything is simply there.
+
+/** Delay between the table rows as they fade in. */
+const ROW_STAGGER_MS = 60;
 
 const SAMPLE_EVENT = "Silk Road Hack Week";
 
@@ -92,35 +105,51 @@ export function ForOrganizers() {
       title="Your hackathon, run from one command centre"
       intro="Set an event up in minutes, then take it from the first sign-up to the published ranking without a spreadsheet or a group chat."
     >
-      <ol className="flex flex-col gap-12 lg:gap-20">
-        {FEATURES.map((feature, i) => (
-          <li
-            key={feature.title}
-            className="grid items-center gap-6 lg:grid-cols-2 lg:gap-14"
-          >
-            <div
-              className={cn(
-                "flex max-w-xl flex-col gap-3",
-                i % 2 === 1 && "lg:order-2",
-              )}
+      <DrawIn>
+        <ol className="flex flex-col gap-12 lg:gap-20">
+          {FEATURES.map((feature, i) => (
+            <li
+              key={feature.title}
+              className="grid items-center gap-6 lg:grid-cols-2 lg:gap-14"
             >
-              <span
-                aria-hidden
-                className="font-mono text-small text-primary/70 tabular-nums"
+              <div
+                className={cn(
+                  "flex max-w-xl flex-col gap-3",
+                  i % 2 === 1 && "lg:order-2",
+                )}
               >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="text-xl font-semibold text-balance">
-                {feature.title}
-              </h3>
-              <p className="text-pretty text-muted-foreground">
-                {feature.text}
-              </p>
-            </div>
-            {feature.vignette}
-          </li>
-        ))}
-      </ol>
+                <span
+                  aria-hidden
+                  className="font-mono text-small text-primary/70 tabular-nums"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="text-xl font-semibold text-balance">
+                  {feature.title}
+                </h3>
+                <p className="text-pretty text-muted-foreground">
+                  {feature.text}
+                </p>
+              </div>
+              {/* Slides in from its own side (from below on phones, where
+                  the rows stack) and fades in, once, when it enters view. */}
+              <div
+                data-draw-item
+                className={cn(
+                  "group/vignette min-w-0 motion-safe:transition-[opacity,translate] motion-safe:duration-(--duration-slow) motion-safe:ease-(--ease-out-expo)",
+                  "data-[draw=idle]:translate-y-4 data-[draw=idle]:opacity-0 lg:data-[draw=idle]:translate-y-0",
+                  i % 2 === 1
+                    ? "lg:data-[draw=idle]:-translate-x-4"
+                    : "lg:data-[draw=idle]:translate-x-4",
+                  styles.vignette,
+                )}
+              >
+                {feature.vignette}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </DrawIn>
     </LandingSection>
   );
 }
@@ -199,18 +228,21 @@ function CriteriaVignette() {
   return (
     <Vignette label="Judging criteria">
       <div className="flex flex-col gap-4">
-        {/* The weights as one bar: the shares of the total, at a glance. */}
-        <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-          {CRITERIA.map((c, i) => (
-            <span
-              key={c.name}
-              style={{ width: `${c.weightPercent}%` }}
-              className={cn(
-                "h-full",
-                ["bg-primary", "bg-primary/60", "bg-primary/30"][i],
-              )}
-            />
-          ))}
+        {/* The weights as one bar: the shares of the total, at a glance.
+            It fills to 100% once, after the vignette slides in. */}
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="flex h-full origin-left group-data-[draw=idle]/vignette:scale-x-0 motion-safe:transition-[scale] motion-safe:delay-150 motion-safe:duration-(--duration-slow) motion-safe:ease-(--ease-out-expo)">
+            {CRITERIA.map((c, i) => (
+              <span
+                key={c.name}
+                style={{ width: `${c.weightPercent}%` }}
+                className={cn(
+                  "h-full",
+                  ["bg-primary", "bg-primary/60", "bg-primary/30"][i],
+                )}
+              />
+            ))}
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -255,7 +287,11 @@ function NextStepVignette() {
       <div className="flex flex-col gap-4">
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="text-sm text-muted-foreground">Phase</span>
-          <PhaseLabel phase="registration" className="font-semibold" />
+          {/* PhaseLabel's markup, so the dot can take the one pulse. */}
+          <span className="inline-flex items-center gap-1.5 font-semibold">
+            <PhaseDot phase="registration" className={styles.pulse} />
+            {PHASE_LABEL.registration}
+          </span>
         </p>
         <dl className="grid grid-cols-3 overflow-hidden rounded-xl border">
           {stats.map(({ label, value }, i) => (
@@ -321,8 +357,13 @@ function TablesVignette() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {TEAMS.map((team) => (
-              <TableRow key={team.name}>
+            {/* The rows fade in one by one, once, after the slide. */}
+            {TEAMS.map((team, i) => (
+              <TableRow
+                key={team.name}
+                style={{ animationDelay: `${150 + i * ROW_STAGGER_MS}ms` }}
+                className="group-data-[draw=idle]/vignette:opacity-0 motion-safe:group-data-[draw=done]/vignette:animate-fade-in"
+              >
                 <TableCell className="font-medium whitespace-normal">
                   {team.name}
                 </TableCell>

@@ -3,7 +3,8 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { ArrowRightIcon, CalendarDaysIcon, UsersIcon } from "lucide-react";
 
-import { EventCardMedia } from "@/components/events/event-card-media";
+import { EventAvatar } from "@/components/events/event-avatar";
+import { EventBanner } from "@/components/events/event-banner";
 import { formatEventDates } from "@/components/events/event-format";
 import { EventStatusBadges } from "@/components/events/status-badge";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -11,15 +12,31 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { prisma } from "@/lib/prisma";
 import { eventImageUrl } from "@/lib/uploads/url";
+import { cn } from "@/lib/utils";
 
+import { DrawIn } from "./draw-in";
 import { LandingSection } from "./section";
 
 // Landing > Happening now (landing plan, section 6): the real events people
 // can join or follow right now, with their banner and logo (or the generated
 // art). Registration open first, then events whose submissions are open; at
 // most six. The cards are the /events cards, without the description.
+//
+// Motion (motion-safe only, once, transforms and opacity only):
+// - the cards rise in one after another the first time the grid scrolls into
+//   view (DrawIn: without JS, without IntersectionObserver or with reduced
+//   motion nothing is ever hidden);
+// - hover and keyboard focus lift a card a little, warm its border toward
+//   amber, zoom the banner inside its frame and lift the logo a touch more.
 
 const SHOWN = 6;
+
+/** Delay between the cards as they rise in. */
+const STAGGER_MS = 60;
+
+/** The hover and focus movement inside a card. */
+const CARD_MOTION =
+  "transition-[translate,scale] duration-(--duration-base) ease-(--ease-out-expo)";
 
 const TITLE = "Happening now";
 const INTRO =
@@ -68,39 +85,70 @@ export async function HappeningNow() {
         </EmptyState>
       ) : (
         <>
-          <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <li key={event.id} className="flex">
-                {/* The whole card is the link, as on /events (docs/08). */}
-                <Link
-                  href={`/events/${event.id}`}
-                  className="group flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground outline-none transition-colors hover:border-ring/60 focus-visible:ring-3 focus-visible:ring-ring/50"
+          <DrawIn>
+            <ul
+              data-draw-item
+              className="group/grid grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+            >
+              {events.map((event, i) => (
+                <li
+                  key={event.id}
+                  style={{ animationDelay: `${i * STAGGER_MS}ms` }}
+                  className="flex group-data-[draw=idle]/grid:opacity-0 motion-safe:group-data-[draw=done]/grid:animate-rise-in"
                 >
-                  <EventCardMedia
-                    name={event.name}
-                    logoUrl={eventImageUrl(event.logoPath)}
-                    bannerUrl={eventImageUrl(event.bannerPath)}
-                  />
-                  <div className="flex flex-1 flex-col gap-3 p-5 pt-3">
-                    <h3 className="text-lg font-semibold break-words group-hover:underline group-hover:underline-offset-4">
-                      {event.name}
-                    </h3>
-                    <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarDaysIcon className="size-4" aria-hidden />
-                        {formatEventDates(event.startDate, event.endDate)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <UsersIcon className="size-4" aria-hidden />
-                        Teams of up to {event.maxTeamSize}
-                      </span>
-                    </p>
-                    <EventStatusBadges event={event} className="mt-auto" />
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  {/* The whole card is the link, as on /events (docs/08). */}
+                  <Link
+                    href={`/events/${event.id}`}
+                    className="group flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground outline-none transition-[translate,border-color] duration-(--duration-base) ease-(--ease-out-expo) hover:border-ring/70 focus-visible:border-ring/70 focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 motion-safe:focus-visible:-translate-y-1"
+                  >
+                    {/* EventCardMedia's layout, composed here so the banner
+                        and the logo can each move on their own. */}
+                    <div className="relative">
+                      <div className="overflow-hidden">
+                        <EventBanner
+                          name={event.name}
+                          bannerUrl={eventImageUrl(event.bannerPath)}
+                          className={cn(
+                            "aspect-[5/2] md:aspect-[8/3]",
+                            CARD_MOTION,
+                            "motion-safe:group-hover:scale-[1.03] motion-safe:group-focus-visible:scale-[1.03]",
+                          )}
+                        />
+                      </div>
+                      <div className="relative z-10 -mt-8 px-5">
+                        <EventAvatar
+                          name={event.name}
+                          logoUrl={eventImageUrl(event.logoPath)}
+                          size="md"
+                          className={cn(
+                            "ring-card",
+                            CARD_MOTION,
+                            "motion-safe:group-hover:-translate-y-0.5 motion-safe:group-focus-visible:-translate-y-0.5",
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3 p-5 pt-3">
+                      <h3 className="text-lg font-semibold break-words group-hover:underline group-hover:underline-offset-4">
+                        {event.name}
+                      </h3>
+                      <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarDaysIcon className="size-4" aria-hidden />
+                          {formatEventDates(event.startDate, event.endDate)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <UsersIcon className="size-4" aria-hidden />
+                          Teams of up to {event.maxTeamSize}
+                        </span>
+                      </p>
+                      <EventStatusBadges event={event} className="mt-auto" />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </DrawIn>
           <p className="mt-6">
             <Link
               href="/events"

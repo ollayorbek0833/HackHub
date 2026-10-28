@@ -40,6 +40,9 @@ test("Happening now lists open events, registration first, at most six", async (
   await page.goto("/");
   const now = section(page, "Happening now");
   await expect(now).toBeVisible();
+  // The events stream in after the shell: wait for the skeleton to go, or a
+  // slow query reads as "no events" and the test skips.
+  await expect(now.locator("[aria-busy='true']")).toHaveCount(0);
 
   const cards = now.getByRole("listitem").filter({
     has: page.getByRole("link", { name: /\S/ }),

@@ -8,7 +8,7 @@ import { NextStepCard } from "@/components/organizer/next-step-card";
 import { PublishResultsButton } from "@/components/organizer/publish-results-button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import {
   nextStep,
   PHASE_HELP,
@@ -52,9 +52,8 @@ export default function EventOverviewPage({
 async function CommandCentre({
   params,
 }: Pick<PageProps<"/organizer/events/[eventId]">, "params">) {
-  await requireRole("ORGANIZER");
   const { eventId } = await params;
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
   const [registrations, teams, submissions, criteria, scoreCount, cards] =
     await Promise.all([
       prisma.eventRegistration.count({ where: { eventId } }),

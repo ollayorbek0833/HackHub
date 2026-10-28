@@ -5,7 +5,7 @@ import { CriteriaForm } from "@/components/criteria/criteria-form";
 import { CriteriaTable } from "@/components/criteria/criteria-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { CRITERIA_MESSAGES, isCriteriaLocked } from "@/lib/domain/criteria";
 import { prisma } from "@/lib/prisma";
 
@@ -37,9 +37,8 @@ export default function CriteriaPage({
 async function Criteria({
   params,
 }: Pick<PageProps<"/organizer/events/[eventId]/criteria">, "params">) {
-  await requireRole("ORGANIZER");
   const { eventId } = await params;
-  await requireEvent(eventId);
+  await requireOwnedEvent(eventId);
 
   const [criteria, scoreCount] = await Promise.all([
     prisma.criterion.findMany({

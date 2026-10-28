@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { fromZodError, RuleError, type ActionState } from "@/lib/action-state";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { validateEventDates } from "@/lib/domain/event-state";
 import { prisma } from "@/lib/prisma";
 import {
@@ -31,8 +31,8 @@ export async function updateEvent(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ORGANIZER");
-  await requireEvent(eventId);
+  // Only the organizer who created the event; anyone else gets not-found.
+  const { user } = await requireOwnedEvent(eventId);
 
   const values = readEventForm(formData);
   const parsed = eventSchema.safeParse(values);
@@ -92,7 +92,7 @@ export async function updateEvent(
         );
       }
       const before = await tx.event.findUniqueOrThrow({
-        where: { id: eventId },
+        where: { id: eventId, createdById: user.id },
         select: { logoPath: true, bannerPath: true },
       });
       await tx.event.update({

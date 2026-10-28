@@ -33,6 +33,7 @@ vi.mock("next/navigation", () => ({
 const {
   getCurrentUser,
   requireEvent,
+  requireOwnedEvent,
   requireRole,
   requireTeamMember,
   requireUser,
@@ -149,6 +150,66 @@ describe("requireEvent", () => {
     findEvent.mockResolvedValue(null);
 
     await expect(requireEvent("missing")).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+});
+
+describe("requireOwnedEvent", () => {
+  const event = {
+    id: "event-1",
+    name: "Demo Hack",
+    createdById: "user-1",
+  };
+
+  it("returns the organizer and the event they created", async () => {
+    signIn("ORGANIZER", "ORGANIZER");
+    findEvent.mockResolvedValue(event);
+
+    await expect(requireOwnedEvent("event-1")).resolves.toEqual({
+      user: { id: "user-1", email: "user@hackhub.test", role: "ORGANIZER" },
+      event,
+    });
+    expect(findEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "event-1" },
+        select: expect.objectContaining({ createdById: true }),
+      }),
+    );
+  });
+
+  it("shows the not-found page for another organizer's event", async () => {
+    signIn("ORGANIZER", "ORGANIZER");
+    findEvent.mockResolvedValue({ ...event, createdById: "organizer-2" });
+
+    await expect(requireOwnedEvent("event-1")).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
+  });
+
+  it("shows the not-found page for an unknown id", async () => {
+    signIn("ORGANIZER", "ORGANIZER");
+    findEvent.mockResolvedValue(null);
+
+    await expect(requireOwnedEvent("missing")).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
+  });
+
+  it("sends a participant or judge home before reading the event", async () => {
+    signIn("PARTICIPANT", "PARTICIPANT");
+
+    await expect(requireOwnedEvent("event-1")).rejects.toThrow(
+      "NEXT_REDIRECT /my-events?notice=no-access",
+    );
+    expect(findEvent).not.toHaveBeenCalled();
+  });
+
+  it("sends a signed-out visitor to /login", async () => {
+    auth.mockResolvedValue(null);
+
+    await expect(requireOwnedEvent("event-1")).rejects.toThrow(
+      "NEXT_REDIRECT /login",
+    );
+    expect(findEvent).not.toHaveBeenCalled();
   });
 });
 

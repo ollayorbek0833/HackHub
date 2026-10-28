@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { type ActionState, RuleError } from "@/lib/action-state";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import {
   publishBlocker,
   registrationBlocker,
@@ -15,9 +15,10 @@ import { eventSwitchSchema } from "@/lib/validation/event-switch";
 
 // The event overview's switches and "Publish results" (docs/08 > Event
 // overview, docs/02 > Publishing, Decisions 2 and 3). Every action authorizes
-// itself, then re-reads the event inside a transaction that holds its row
-// lock, so two organizers (or an organizer and the ranking page) can't
-// interleave a reopen and a publish.
+// itself (only the organizer who created the event may change it), then
+// re-reads the event inside a transaction that holds its row lock, so two
+// requests (or the overview and the ranking page) can't interleave a reopen
+// and a publish.
 //
 // Bind the event id in front: `publishResults.bind(null, eventId)`. The
 // ranking preview imports publishResults from here.
@@ -30,15 +31,14 @@ export async function setRegistrationOpen(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ORGANIZER");
-  await requireEvent(eventId);
+  const { user } = await requireOwnedEvent(eventId);
   const parsed = eventSwitchSchema.safeParse({ open: formData.get("open") });
   if (!parsed.success) return { ok: false, formError: UPDATE_FAILED };
   const { open } = parsed.data;
 
   try {
     await prisma.$transaction(async (tx) => {
-      const event = await lockEvent(tx, eventId);
+      const event = await lockEvent(tx, eventId, user.id);
       const refused = registrationBlocker(event);
       if (refused) throw new RuleError(refused);
       await tx.event.update({
@@ -63,15 +63,14 @@ export async function setSubmissionsOpen(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ORGANIZER");
-  await requireEvent(eventId);
+  const { user } = await requireOwnedEvent(eventId);
   const parsed = eventSwitchSchema.safeParse({ open: formData.get("open") });
   if (!parsed.success) return { ok: false, formError: UPDATE_FAILED };
   const { open } = parsed.data;
 
   try {
     await prisma.$transaction(async (tx) => {
-      const event = await lockEvent(tx, eventId);
+      const event = await lockEvent(tx, eventId, user.id);
       const scoreCount = await tx.score.count({
         where: { criterion: { eventId } },
       });
@@ -100,12 +99,11 @@ export async function setSubmissionsOpen(
  * action fits `useActionState` without taking `(prev, formData)`.
  */
 export async function publishResults(eventId: string): Promise<ActionState> {
-  await requireRole("ORGANIZER");
-  await requireEvent(eventId);
+  const { user } = await requireOwnedEvent(eventId);
 
   try {
     await prisma.$transaction(async (tx) => {
-      const event = await lockEvent(tx, eventId);
+      const event = await lockEvent(tx, eventId, user.id);
       const criteria = await tx.criterion.findMany({
         where: { eventId },
         select: { weightPercent: true },
@@ -129,11 +127,19 @@ export async function publishResults(eventId: string): Promise<ActionState> {
   return { ok: true, message: "Results published." };
 }
 
-/** Locks the event row for the rest of the transaction and reads its switches. */
-async function lockEvent(tx: Prisma.TransactionClient, eventId: string) {
+/**
+ * Locks the event row for the rest of the transaction and reads its switches.
+ * The read is scoped to the owner as well, so it throws (and nothing is
+ * written) if the event isn't the organizer's.
+ */
+async function lockEvent(
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  ownerId: string,
+) {
   await tx.$queryRaw`SELECT id FROM events WHERE id = ${eventId} FOR UPDATE`;
   return tx.event.findUniqueOrThrow({
-    where: { id: eventId },
+    where: { id: eventId, createdById: ownerId },
     select: {
       registrationOpen: true,
       submissionsOpen: true,

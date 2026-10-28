@@ -3,8 +3,9 @@ import "dotenv/config";
 import { expect, test, type Page } from "@playwright/test";
 
 // "Events I run" (/organizer) lists only the events the signed-in organizer
-// created, and its tab counts and the event chip's switch menu follow. Any
-// organizer can still open and manage any event by its URL.
+// created, and its tab counts and the event chip's switch menu follow. Access
+// matches: another organizer's event pages are not found, and posting to an
+// action bound to another organizer's event changes nothing.
 //
 // Needs the demo seed (npm run db:seed:demo): the first organizer
 // (SEED_ORGANIZER_EMAIL) created "Demo Hack · judging" and "Open Hack · live";
@@ -70,9 +71,8 @@ test("an organizer sees only the events they created", async ({ page }) => {
   for (const name of FIRST_EVENTS) await expect(menu.getByText(name)).toHaveCount(0);
 });
 
-test("another organizer's events stay off the list but open by URL", async ({
-  page,
-}) => {
+/** The second organizer's event id, read from their own "Events I run". */
+async function secondEventId(page: Page) {
   await logIn(page, SECOND);
   await card(page, SECOND_EVENT).getByRole("link").click();
   await expect(page).toHaveURL(/\/organizer\/events\/[^/]+$/);
@@ -81,17 +81,97 @@ test("another organizer's events stay off the list but open by URL", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: SECOND_EVENT }),
   ).toBeVisible();
-  const secondUrl = page.url();
+  const id = new URL(page.url()).pathname.split("/").pop()!;
   await page.context().clearCookies();
+  return id;
+}
+
+const NOT_FOUND = "We couldn't find this page.";
+
+test("another organizer's events stay off the list and aren't found by URL", async ({
+  page,
+}) => {
+  const secondId = await secondEventId(page);
 
   await logIn(page, FIRST);
   for (const name of FIRST_EVENTS) await expect(card(page, name)).toHaveCount(1);
   await expect(card(page, SECOND_EVENT)).toHaveCount(0);
   await expectCountsMatchCards(page);
 
-  // Managing any event is still open to every organizer.
-  await page.goto(secondUrl);
+  // Every page of another organizer's event is the not-found page, the same as
+  // an unknown id. These pages stream (the guard runs inside Suspense), so the
+  // status is already sent; notFound() shows the 404 page and marks it noindex.
+  for (const sub of [
+    "",
+    "/edit",
+    "/criteria",
+    "/participants",
+    "/participants/teams",
+    "/ranking",
+  ]) {
+    await page.goto(`/organizer/events/${secondId}${sub}`);
+    await expect(page.getByText(NOT_FOUND), sub || "overview").toBeVisible();
+    await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
+    await expect(page.getByText(SECOND_EVENT)).toHaveCount(0);
+  }
+
+  // The public event page offers them no "Manage event" either.
+  await page.goto(`/events/${secondId}`);
   await expect(
     page.getByRole("heading", { level: 1, name: SECOND_EVENT }),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Manage event" })).toHaveCount(0);
+});
+
+test("an action bound to another organizer's event changes nothing", async ({
+  page,
+}) => {
+  const secondId = await secondEventId(page);
+
+  // The first organizer opens their own closed event's overview...
+  await logIn(page, FIRST);
+  await card(page, "Demo Hack · judging").getByRole("link").click();
+  await expect(page).toHaveURL(/\/organizer\/events\/[^/]+$/);
+  const ownUrl = page.url();
+  const ownId = new URL(ownUrl).pathname.split("/").pop()!;
+  const registration = page.getByRole("switch", { name: "Registration" });
+  await page.getByText("Manual controls").click();
+  await expect(registration).not.toBeChecked();
+
+  // ...and posts "open registration" with the second organizer's event id in
+  // place of their own: what a hand-made request to the action would send.
+  let rewritten = 0;
+  await page.route(ownUrl, async (route) => {
+    const request = route.request();
+    const body = request.postData();
+    if (request.method() !== "POST" || !body?.includes(ownId)) {
+      return route.continue();
+    }
+    rewritten++;
+    await route.continue({ postData: body.replaceAll(ownId, secondId) });
+  });
+  const posted = page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.url() === ownUrl,
+  );
+  await registration.click();
+  await posted;
+  expect(rewritten).toBe(1);
+  await page.unroute(ownUrl);
+
+  // The second organizer's event is still closed, so it isn't listed (wait
+  // for the list itself: it streams in)...
+  await page.goto("/events");
+  await expect(
+    page.getByRole("link", { name: /Open Hack · live/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: SECOND_EVENT })).toHaveCount(0);
+  // ...and the first organizer's own event wasn't touched either.
+  await page.goto(ownUrl);
+  await page.getByText("Manual controls").click();
+  await expect(
+    page.getByRole("switch", { name: "Registration" }),
+  ).not.toBeChecked();
 });

@@ -101,6 +101,7 @@ async function EventDetails({
         resultsPublished: true,
         logoPath: true,
         bannerPath: true,
+        createdById: true,
         criteria: {
           select: { id: true, name: true, weightPercent: true, maxScore: true },
           orderBy: [{ weightPercent: "desc" }, { createdAt: "asc" }],
@@ -129,6 +130,7 @@ async function EventDetails({
     <PrimaryAction
       event={event}
       role={user?.role ?? null}
+      ownsEvent={user?.id === event.createdById}
       participant={participant}
     />
   );
@@ -395,6 +397,7 @@ const BIG = "h-11 w-full px-6 text-base";
 function PrimaryAction({
   event,
   role,
+  ownsEvent,
   participant,
 }: {
   event: {
@@ -404,11 +407,22 @@ function PrimaryAction({
     resultsPublished: boolean;
   };
   role: Role | null;
+  /** The signed-in user created this event. */
+  ownsEvent: boolean;
   participant: ParticipantState | null;
 }): ReactNode {
   const teamHref = `/events/${event.id}/team`;
 
   if (role === "ORGANIZER") {
+    // Only the organizer who created the event can manage it.
+    if (!ownsEvent) {
+      return (
+        <p className="flex items-start gap-2 text-sm text-muted-foreground">
+          <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+          Another organizer runs this event.
+        </p>
+      );
+    }
     return (
       <Button asChild size="lg" className={BIG}>
         <Link href={`/organizer/events/${event.id}`}>Manage event</Link>

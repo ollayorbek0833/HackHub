@@ -592,11 +592,13 @@ npx shadcn@latest add input label textarea field select switch badge table tabs 
 | `/judge` | `requireRole("JUDGE")` | — (every judge sees every event in judging, Decision 1) |
 | `/judge/teams/[teamId]` | `requireRole("JUDGE")` | save scores: same, `canScore`, team has a submission |
 | `/organizer/**` | `requireRole("ORGANIZER")` on every page | every action: `requireRole("ORGANIZER")` |
-| `/organizer/users` | `requireRole("ORGANIZER")` | change role: target not on a team, not an organizer (Decision 11) |
+| `/organizer/events/[eventId]/**` | `requireOwnedEvent(eventId)`: the organizer who created the event, else not-found | every action: `requireOwnedEvent(eventId)` before any write |
+| `/organizer/users` | `requireRole("ORGANIZER")`; a phone only for people registered for one of the organizer's events | change role: target not on a team, not an organizer (Decision 11) |
 
 Participants see their own team's submission on the team page (Decision 12). `/organizer` lists only the events the signed-in organizer created (`createdById`), and so does an
-organizer's event chip menu. That's a view, not access: docs/03 has no per-event ownership rule, so organizer pages and
-actions check the role only, and any organizer can open and manage any event by its URL.
+organizer's event chip menu. Access follows the same rule: every page and action under `/organizer/events/[eventId]` calls
+`requireOwnedEvent(eventId)`, so another organizer's event gets the not-found page, by URL or by posting to its actions.
+This is the interim rule until organizations let several organizers share an event.
 
 ### Testing
 

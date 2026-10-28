@@ -23,10 +23,11 @@ import { eventImageUrl } from "@/lib/uploads/url";
 
 // docs/08 > /organizer "Events I run": the events this organizer created,
 // with their state at a glance, filtered by the tabs All / Live / Upcoming /
-// Judging / Finished (?status=, server-side). Only the list is personal: any
-// organizer can still open and manage any event by its URL. The title and
-// primary action are static; searchParams and the list are read inside
-// Suspense (Cache Components).
+// Judging / Finished (?status=, server-side). Access matches the list: every
+// page and action under /organizer/events/[eventId] calls requireOwnedEvent,
+// so another organizer's event is not found. The title and primary action are
+// static; searchParams and the list are read inside Suspense (Cache
+// Components).
 
 export default function OrganizerHomePage({
   searchParams,

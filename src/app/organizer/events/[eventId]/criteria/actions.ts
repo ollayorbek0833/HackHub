@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { isUniqueViolation, RuleError, type ActionState } from "@/lib/action-state";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { CRITERIA_MESSAGES, type CriteriaIssue } from "@/lib/domain/criteria";
 import { prisma } from "@/lib/prisma";
 import { InvalidCriteria, replaceCriteria } from "@/lib/transactions/save-criteria";
@@ -17,7 +17,8 @@ import {
 /**
  * Saves the whole list at once (docs/07 > Transactions > Save criteria). The
  * event id is bound by the page, but anyone can call this with any id, so the
- * role and the event are checked here. The transaction is in
+ * role and the event's owner are checked here: only the organizer who created
+ * the event can change its criteria. The transaction is in
  * lib/transactions/save-criteria.ts.
  */
 export async function saveCriteria(
@@ -25,8 +26,7 @@ export async function saveCriteria(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ORGANIZER");
-  await requireEvent(eventId);
+  await requireOwnedEvent(eventId);
 
   const parsed = criteriaSchema.safeParse(criteriaRowsFromFormData(formData));
   if (!parsed.success) {

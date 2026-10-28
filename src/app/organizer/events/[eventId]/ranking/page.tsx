@@ -5,7 +5,7 @@ import { PublishResultsButton } from "@/components/organizer/publish-results-but
 import { RankingPreviewTable } from "@/components/ranking/ranking-preview-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { criteriaAreSet, publishBlocker } from "@/lib/domain/event-switches";
 import { getEventRanking } from "@/lib/queries/ranking";
 
@@ -45,9 +45,8 @@ export default function RankingPreviewPage({
 async function RankingPreview({
   params,
 }: Pick<PageProps<"/organizer/events/[eventId]/ranking">, "params">) {
-  await requireRole("ORGANIZER");
   const { eventId } = await params;
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
   const ranking = await getEventRanking(eventId);
 
   const published = event.resultsPublished;

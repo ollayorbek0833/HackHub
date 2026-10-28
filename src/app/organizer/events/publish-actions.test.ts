@@ -55,7 +55,12 @@ const CLOSED = {
 beforeEach(() => {
   vi.clearAllMocks();
   signInAs("ORGANIZER");
-  db.event.findUnique.mockResolvedValue({ id: "event-1", ...CLOSED });
+  // user-1 created it: only the event's own organizer can publish.
+  db.event.findUnique.mockResolvedValue({
+    id: "event-1",
+    createdById: "user-1",
+    ...CLOSED,
+  });
   db.event.findUniqueOrThrow.mockResolvedValue(CLOSED);
   db.criterion.findMany.mockResolvedValue([
     { weightPercent: 60 },

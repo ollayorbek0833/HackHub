@@ -38,7 +38,9 @@ async function Users({
   const filter = usersFilterSchema.parse(await searchParams);
 
   // Every user is loaded; search and the role filter run in the browser.
-  // ?q= and ?role= still prefill them.
+  // ?q= and ?role= still prefill them. A phone is sent only for people
+  // registered for at least one event this organizer created; everyone
+  // else's stays on the server.
   const users = await prisma.user.findMany({
     orderBy: [{ role: "desc" }, { email: "asc" }],
     select: {
@@ -46,6 +48,11 @@ async function Users({
       email: true,
       role: true,
       profile: { select: { name: true, phone: true } },
+      registrations: {
+        where: { event: { createdById: organizer.id } },
+        select: { id: true },
+        take: 1,
+      },
       memberships: {
         orderBy: { joinedAt: "asc" },
         select: {
@@ -61,6 +68,7 @@ async function Users({
     const teamEvents = user.memberships.map((m) => m.event.name);
     const to = nextRole(user.role);
     const self = user.id === organizer.id;
+    const phoneShown = user.registrations.length > 0;
     const blocked =
       to && !self
         ? roleChangeError(
@@ -78,7 +86,8 @@ async function Users({
       id: user.id,
       name,
       email: user.email,
-      phone: user.profile?.phone ?? null,
+      phone: phoneShown ? (user.profile?.phone ?? null) : null,
+      phoneShown,
       role: user.role,
       teams: user.memberships.map((m) => `${m.team.name} (${m.event.name})`),
       // Organizers and the current user get no action at all (docs/08).

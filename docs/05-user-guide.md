@@ -220,7 +220,7 @@ are open, and update it until they close.
 **Good to know:**
 - The end date can't be before the start date. An event can start and end on the same day.
 - A new event has registration closed, so participants don't see it until you open registration.
-- Any organizer can manage any event.
+- You manage only the events you created. Other organizers' events don't open for you.
 - The maximum team size is a whole number from 1 to 10 (4 by default). When you edit it, you can't set it below the
   size of the largest team that already exists.
 

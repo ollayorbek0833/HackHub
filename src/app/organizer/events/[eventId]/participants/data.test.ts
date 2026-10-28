@@ -38,6 +38,8 @@ const EVENT = {
   registrationOpen: false,
   submissionsOpen: false,
   resultsPublished: false,
+  // The signed-in organizer (user-1) created it.
+  createdById: "user-1",
 };
 
 function signInAs(role: Role | null) {

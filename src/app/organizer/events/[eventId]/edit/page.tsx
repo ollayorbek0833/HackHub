@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { EventForm } from "@/components/organizer/event-form";
 import { EventFormSkeleton } from "@/components/organizer/event-form-skeleton";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import { eventImageUrl } from "@/lib/uploads/url";
 import { toDateInput } from "@/lib/validation/event";
@@ -32,9 +32,8 @@ export default function EditEventPage({
 async function EditEventForm({
   params,
 }: Pick<PageProps<"/organizer/events/[eventId]/edit">, "params">) {
-  await requireRole("ORGANIZER");
   const { eventId } = await params;
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
   const { description, logoPath, bannerPath } =
     await prisma.event.findUniqueOrThrow({
       where: { id: eventId },

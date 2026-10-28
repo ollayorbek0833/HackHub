@@ -40,7 +40,10 @@ export type UserRow = {
   id: string;
   name: string | null;
   email: string;
+  /** Null when not given, and always null when phoneShown is false. */
   phone: string | null;
+  /** Registered for one of the signed-in organizer's events. */
+  phoneShown: boolean;
   role: Role;
   teams: string[];
   /** Organizers and the current user get no action (docs/08). */
@@ -257,8 +260,12 @@ function UserPanel({
             >
               {formatPhone(row.phone)}
             </a>
-          ) : (
+          ) : row.phoneShown ? (
             "Not given"
+          ) : (
+            <span className="text-muted-foreground">
+              Only shown for your events&apos; participants
+            </span>
           )}
         </dd>
       </dl>

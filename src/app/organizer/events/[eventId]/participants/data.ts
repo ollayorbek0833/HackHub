@@ -2,14 +2,14 @@ import "server-only";
 
 import type { ParticipantTableRow } from "@/components/organizer/participants-table";
 import type { TeamTableRow } from "@/components/organizer/teams-table";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 
 // The reads behind the two tabs of docs/08 > Participants and teams. Each tab
 // is one Prisma query that selects only what the tab shows, plus both tab
 // counts. Both loaders authorize first, so the pages can't forget to: a
 // participant or judge goes to their home with ?notice=no-access, and an
-// unknown event id gets the not-found page.
+// unknown event id, or another organizer's event, gets the not-found page.
 
 export type TabCounts = { participants: number; teams: number };
 
@@ -31,8 +31,7 @@ const counts = {
  * name or email, ignoring case; the tab counts stay the event's totals.
  */
 export async function loadParticipants(eventId: string, search: string) {
-  await requireRole("ORGANIZER");
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
 
   const contains = { contains: search, mode: "insensitive" } as const;
   const { _count, registrations } = await prisma.event.findUniqueOrThrow({
@@ -96,8 +95,7 @@ export async function loadParticipants(eventId: string, search: string) {
 
 /** Every team in the event with its members and submission, sorted by name. */
 export async function loadTeams(eventId: string) {
-  await requireRole("ORGANIZER");
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
 
   const { _count, teams } = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },

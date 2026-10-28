@@ -59,10 +59,25 @@ export const requireEvent = cache(async (eventId: string) => {
       resultsPublished: true,
       logoPath: true,
       bannerPath: true,
+      createdById: true,
     },
   });
   if (!event) notFound();
   return event;
+});
+
+/**
+ * The signed-in organizer and an event they created. Anyone else's event gets
+ * the not-found page, the same as an unknown id, so a URL or a server action
+ * bound to another organizer's event id reveals and changes nothing. Every
+ * organizer page and action under /organizer/events/[eventId] calls this
+ * first. Deduped per render (it reuses requireEvent's read).
+ */
+export const requireOwnedEvent = cache(async (eventId: string) => {
+  const user = await requireRole("ORGANIZER");
+  const event = await requireEvent(eventId);
+  if (event.createdById !== user.id) notFound();
+  return { user, event };
 });
 
 /**

@@ -293,7 +293,7 @@ show under the field. Errors that aren't about one field show above the form.
 
 - **Purpose.** The organizer's home: the events this organizer created, with their state at a glance.
 - **Who.** Organizer. Shows only the events this organizer created; the tab counts and the event chip's switch menu
-  count the same events. Any organizer can still open and manage any event by its URL.
+  count the same events. Another organizer's event isn't found by its URL either.
 - **Data, per event.** Name, dates, status badges, registered participants, teams, submissions.
 - **Layout.** The same event card as `/events` (banner, overlapping logo); the whole card opens the event.
 - **Actions.** Primary: "New event" → `/organizer/events/new`. Open an event → `/organizer/events/[eventId]`.
@@ -385,7 +385,7 @@ show under the field. Errors that aren't about one field show above the form.
 #### `/organizer/users` Users and roles (S1, #13)
 
 - **Purpose.** Make a user a judge, or a judge a participant again.
-- **Data.** Every user: name (or "No name yet"), email, role, and whether they're on a team (event names). A search by name, email or phone, and a filter by role. The detail panel shows the phone as a `tel:` link ("Not given" when blank).
+- **Data.** Every user: name (or "No name yet"), email, role, and whether they're on a team (event names). A search by name, email or phone, and a filter by role. The detail panel shows the phone as a `tel:` link ("Not given" when blank), only for people registered for at least one event the signed-in organizer created; for anyone else no phone is sent and the panel says "Only shown for your events' participants".
 - **Actions, per row.** "Make judge" on a participant, "Make participant" on a judge. Organizers have no action, and nobody can change their own role.
 - **Rule.** A participant who's on a team in any event can't become a judge (**Decision 11**). The action is disabled with the reason: "{name} is on a team in {event}, so they can't become a judge."
 - **After a change.** The row updates, toast "{name} is now a judge." / "{name} is now a participant." No confirm dialog: the change can be undone right away.

@@ -68,7 +68,11 @@ const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  db.event.findUnique.mockResolvedValue({ id: "event-1" });
+  // user-1 created it: updateEvent is only for the event's own organizer.
+  db.event.findUnique.mockResolvedValue({
+    id: "event-1",
+    createdById: "user-1",
+  });
   db.event.create.mockResolvedValue({ id: "event-1" });
   db.event.findUniqueOrThrow.mockResolvedValue({
     logoPath: null,
@@ -173,6 +177,19 @@ describe("updateEvent", () => {
     expect(db.event.update).not.toHaveBeenCalled();
   });
 
+  it("shows the not-found page for another organizer's event, and saves nothing", async () => {
+    signInAs("ORGANIZER");
+    db.event.findUnique.mockResolvedValue({
+      id: "event-2",
+      createdById: "organizer-2",
+    });
+    await expect(updateEvent("event-2", null, form(VALID))).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
+    expect(db.$queryRaw).not.toHaveBeenCalled();
+    expect(db.event.update).not.toHaveBeenCalled();
+  });
+
   it("saves the details, then opens the overview (TC-25)", async () => {
     signInAs("ORGANIZER");
     db.team.findFirst.mockResolvedValue({
@@ -183,6 +200,12 @@ describe("updateEvent", () => {
       updateEvent("event-1", null, form({ ...VALID, maxTeamSize: "3" })),
     ).rejects.toThrow("NEXT_REDIRECT /organizer/events/event-1?saved=updated");
     expect(db.$queryRaw).toHaveBeenCalledOnce();
+    // The transaction's read is scoped to the owner too.
+    expect(db.event.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "event-1", createdById: "user-1" },
+      }),
+    );
     expect(db.event.update).toHaveBeenCalledWith({
       where: { id: "event-1" },
       data: {

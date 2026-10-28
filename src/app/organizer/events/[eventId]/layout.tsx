@@ -9,7 +9,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { EventChip, EventChipSkeleton } from "@/components/layout/event-chip";
 import { EventSubNav } from "@/components/organizer/event-sub-nav";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requireEvent, requireRole } from "@/lib/auth/dal";
+import { requireOwnedEvent } from "@/lib/auth/dal";
 import { eventPhase } from "@/lib/domain/event-phase";
 import { prisma } from "@/lib/prisma";
 import { eventImageUrl } from "@/lib/uploads/url";
@@ -40,9 +40,8 @@ export default function OrganizerEventLayout({
 async function EventHeader({
   params,
 }: Pick<LayoutProps<"/organizer/events/[eventId]">, "params">) {
-  await requireRole("ORGANIZER");
   const { eventId } = await params;
-  const event = await requireEvent(eventId);
+  const { event } = await requireOwnedEvent(eventId);
   const submitted = await prisma.team.count({
     where: { eventId: event.id, submission: { isNot: null } },
   });

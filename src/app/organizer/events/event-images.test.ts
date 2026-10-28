@@ -96,7 +96,10 @@ async function filesOf(eventId: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  db.event.findUnique.mockResolvedValue({ id: "event-1" });
+  db.event.findUnique.mockResolvedValue({
+    id: "event-1",
+    createdById: "user-1",
+  });
   db.event.create.mockResolvedValue({ id: "event-1" });
   db.team.findFirst.mockResolvedValue(null);
   db.event.findUniqueOrThrow.mockResolvedValue({
@@ -204,7 +207,10 @@ describe("event image uploads", () => {
         .toBuffer(),
     };
     const old = await storeEventImage("event-2", prepared);
-    db.event.findUnique.mockResolvedValue({ id: "event-2" });
+    db.event.findUnique.mockResolvedValue({
+      id: "event-2",
+      createdById: "user-1",
+    });
     db.event.findUniqueOrThrow.mockResolvedValue({
       logoPath: old,
       bannerPath: null,
@@ -230,7 +236,10 @@ describe("event image uploads", () => {
         .toBuffer(),
     };
     const old = await storeEventImage("event-3", prepared);
-    db.event.findUnique.mockResolvedValue({ id: "event-3" });
+    db.event.findUnique.mockResolvedValue({
+      id: "event-3",
+      createdById: "user-1",
+    });
     db.event.findUniqueOrThrow.mockResolvedValue({
       logoPath: null,
       bannerPath: old,
@@ -249,7 +258,10 @@ describe("event image uploads", () => {
 
   it("keeps the old file and drops the new one when the update is refused", async () => {
     signInAs("ORGANIZER");
-    db.event.findUnique.mockResolvedValue({ id: "event-4" });
+    db.event.findUnique.mockResolvedValue({
+      id: "event-4",
+      createdById: "user-1",
+    });
     db.team.findFirst.mockResolvedValue({
       name: "Null Pointers",
       _count: { members: 4 },

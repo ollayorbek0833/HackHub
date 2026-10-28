@@ -127,6 +127,30 @@ docker compose -f docker-compose.prod.yml run --rm -e SHOWCASE_CONFIRM=wipe:<db>
 Afterwards, point `SEED_ORGANIZER_EMAIL` at the first organizer it prints and set `SEED_ORGANIZER_PASSWORD=12345678i`, so
 the seed on the next deploy finds that organizer instead of adding a new one.
 
+### Showcase images
+
+`prisma/seed-showcase-images.ts` gives the 50 showcase events a logo and a banner from `prisma/showcase-assets/`: a
+photo per banner (Unsplash, free license, credited in `prisma/showcase-assets/CREDITS.md`) and a designed logo per event.
+The WebPs are committed, so it needs no network and no fonts.
+
+- It matches events by name (a slug of it), so run it after the showcase seed. Events with other names are left alone.
+- It's a dry run unless you pass `--apply`. Then it writes each event's two files into `UPLOAD_DIR` (as
+  `events/<eventId>/<kind>-<hex>.webp`, like an upload), sets `logoPath` and `bannerPath` in one transaction, deletes the
+  images the events had before, and prints how many events matched, which assets are missing and which events it skipped.
+- New files and folders get the owner of the `UPLOAD_DIR` root (the app's `nextjs` user in production), so organizers can
+  still replace the images. Running it twice changes nothing.
+
+```bash
+# locally (UPLOAD_DIR defaults to ./uploads)
+npm run db:seed:showcase-images -- --apply
+# production, in the migrate image with the uploads volume mounted
+docker compose -f docker-compose.prod.yml run --rm -v hackhub_uploads:/app/uploads -e UPLOAD_DIR=/app/uploads migrate npx tsx prisma/seed-showcase-images.ts --apply
+```
+
+To change an image, edit `prisma/showcase-assets/manifest.ts`, then rebuild with
+`npx tsx prisma/showcase-assets/build-banners.ts` (downloads the photos) or
+`FONT_DIR=<folder with Space Grotesk> npx tsx prisma/showcase-assets/generate-logos.ts`, and commit the WebPs.
+
 ## Production deployment (VPS + Docker)
 
 The VPS already runs nginx, which terminates HTTPS. The app stack runs in Docker, defined in `docker-compose.prod.yml`:

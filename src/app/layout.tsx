@@ -9,6 +9,7 @@ import {
   SiteHeader,
   SiteHeaderSkeleton,
 } from "@/components/layout/site-header";
+import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
@@ -30,9 +31,31 @@ const unbounded = Unbounded({
   weight: "800",
 });
 
+// The landing page uses these as they are; every other page sets a short
+// title ("Events") and the template adds " · HackHub". Public pages build
+// theirs with pageMetadata() (lib/site), which repeats the social image.
 export const metadata: Metadata = {
-  title: "HackHub",
-  description: "Run a hackathon from registration to final ranking.",
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  title: {
+    default: "HackHub · Run a whole hackathon in one place",
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    title: "HackHub · Run a whole hackathon in one place",
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HackHub · Run a whole hackathon in one place",
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
 };
 
 // The browser chrome matches the Scoreboard ground (#0C0A08).

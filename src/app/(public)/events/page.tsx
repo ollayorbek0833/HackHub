@@ -14,10 +14,18 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
+import { pageMetadata } from "@/lib/site";
 import { eventImageUrl } from "@/lib/uploads/url";
 
 // docs/08 > /events. Everyone can browse; only events with registration open
 // are listed (Decision 5), soonest start date first.
+
+export const metadata = pageMetadata({
+  title: "Events",
+  description:
+    "Hackathons open for registration on HackHub. Open one to see the dates, team size and judging criteria, then register.",
+  path: "/events",
+});
 
 export default function EventsPage() {
   return (

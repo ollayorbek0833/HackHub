@@ -19,7 +19,7 @@ import { scoreFieldName } from "@/lib/validation/scoring";
 
 import { saveScores } from "./actions";
 
-export const metadata: Metadata = { title: "Score a team · HackHub" };
+export const metadata: Metadata = { title: "Score a team" };
 
 // docs/08 > /judge/teams/[teamId], as the redesign's queue + scorecard: the
 // event's queue on the left (desktop), the project and the scorecard on the

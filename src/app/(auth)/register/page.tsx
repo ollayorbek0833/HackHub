@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
@@ -12,10 +11,16 @@ import {
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { ROLE_HOME } from "@/lib/auth/permissions";
+import { pageMetadata } from "@/lib/site";
 
 import { register } from "./actions";
 
-export const metadata: Metadata = { title: "Create an account · HackHub" };
+export const metadata = pageMetadata({
+  title: "Create an account",
+  description:
+    "Create a free HackHub account to register for hackathons, form a team and submit your project.",
+  path: "/register",
+});
 
 // docs/08 > /register. Signed-in users go to their role home. Rendered under
 // (auth)/loading.tsx, so reading the session here is fine.

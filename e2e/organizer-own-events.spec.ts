@@ -76,6 +76,11 @@ test("another organizer's events stay off the list but open by URL", async ({
   await logIn(page, SECOND);
   await card(page, SECOND_EVENT).getByRole("link").click();
   await expect(page).toHaveURL(/\/organizer\/events\/[^/]+$/);
+  // Wait for the page itself, not just the URL: a response still in flight can
+  // set the session cookie again after clearCookies().
+  await expect(
+    page.getByRole("heading", { level: 1, name: SECOND_EVENT }),
+  ).toBeVisible();
   const secondUrl = page.url();
   await page.context().clearCookies();
 

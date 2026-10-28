@@ -1,21 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-// docs/08 > "/ Landing" (redesign: the demo-day big screen): the example
-// scoreboard, the two ways in, one line per role and the steps of a hackathon.
-test("the home page loads and names the three role areas", async ({ page }) => {
+// The landing page (landing plan): the sections' composition. The leaderboard
+// hero is gone; the open events still show while "Happening now" is a stub.
+test("the home page no longer leads with an event leaderboard", async ({
+  page,
+}) => {
   await page.goto("/");
 
+  await expect(page.getByRole("table", { name: /Example ranking/ })).toHaveCount(
+    0,
+  );
   await expect(
-    page.getByRole("heading", { level: 1, name: /Run a hackathon/ }),
+    page.getByRole("heading", { level: 2, name: "Open for registration" }),
   ).toBeVisible();
-  for (const role of ["Participants", "Judges", "Organizers"]) {
-    await expect(page.getByRole("heading", { name: role })).toBeVisible();
-  }
-  await expect(page.getByRole("table", { name: /Example ranking/ })).toBeVisible();
-  await expect(
-    page.getByRole("main").getByRole("link", { name: "Run a hackathon" }),
-  ).toHaveAttribute("href", "/register");
-  await expect(
-    page.getByRole("main").getByRole("link", { name: "Join one" }),
-  ).toHaveAttribute("href", "/events");
+  await expect(page.getByRole("contentinfo")).toBeVisible();
 });

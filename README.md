@@ -1,5 +1,10 @@
 # HackHub
 
+[![CI](https://github.com/ollayorbek0833/HackHub/actions/workflows/ci.yml/badge.svg)](https://github.com/ollayorbek0833/HackHub/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js 22](https://img.shields.io/badge/node-22-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Live site](https://img.shields.io/badge/live-hackhub.mekhroj.uz-2ea44f)](https://hackhub.mekhroj.uz)
+
 HackHub is a web platform that runs a hackathon from start to finish. Participants register, create a profile with
 their skills, browse events, register for one, and create a team or join one with its invite code. Organizers set up
 the event, set the judging criteria and their weights, and open and close registration and submissions. Teams submit
@@ -46,3 +51,12 @@ The full steps, the demo data and the production deploy are in
 
 Project documentation is in [`docs/`](docs/README.md): requirements, scope decisions, architecture, setup and
 deployment, user guide, test report, system design and the UI specification.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues privately as described
+in [SECURITY.md](SECURITY.md).
+
+## License
+
+Released under the [MIT License](LICENSE).

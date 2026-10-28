@@ -149,7 +149,8 @@ test("a signed-in request doesn't re-issue the session cookie, so one in flight 
 
   // Prefetches leave while signed in and can land after log out. If the proxy
   // set the session cookie on them, they would sign the user back in.
-  for (const path of ["/my-events", "/", "/events"]) {
+  // /api/auth-state is what a tab asks when it comes back into view.
+  for (const path of ["/my-events", "/", "/events", "/api/auth-state"]) {
     const response = await page.request.get(path, { maxRedirects: 0 });
     const setCookies = response
       .headersArray()

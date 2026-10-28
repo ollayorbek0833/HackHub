@@ -1,6 +1,34 @@
 import { describe, expect, it } from "vitest";
 
-import { isAuthPath, isProtectedPath, safeCallbackUrl } from "./redirects";
+import {
+  isAuthPath,
+  isPageLoad,
+  isProtectedPath,
+  safeCallbackUrl,
+} from "./redirects";
+
+const HTML_ACCEPT =
+  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+
+describe("isPageLoad", () => {
+  it("is true for a browser navigation", () => {
+    expect(
+      isPageLoad(
+        new Headers({ "sec-fetch-mode": "navigate", accept: HTML_ACCEPT }),
+      ),
+    ).toBe(true);
+    // A browser that doesn't send Sec-Fetch-Mode.
+    expect(isPageLoad(new Headers({ accept: HTML_ACCEPT }))).toBe(true);
+  });
+
+  it("is false for the App Router's page fetches and prefetches", () => {
+    expect(
+      isPageLoad(new Headers({ "sec-fetch-mode": "cors", accept: "*/*" })),
+    ).toBe(false);
+    expect(isPageLoad(new Headers({ accept: "*/*" }))).toBe(false);
+    expect(isPageLoad(new Headers())).toBe(false);
+  });
+});
 
 describe("isProtectedPath", () => {
   it("protects the signed-in areas from docs/07", () => {

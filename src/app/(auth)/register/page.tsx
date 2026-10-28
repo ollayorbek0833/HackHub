@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { LogoMark } from "@/components/brand/logo";
+import { HardRedirect } from "@/components/auth/hard-redirect";
 import { RegisterForm } from "@/components/auth/register-form";
 import {
   Card,
@@ -22,13 +22,14 @@ export const metadata = pageMetadata({
   path: "/register",
 });
 
-// docs/08 > /register. Signed-in users go to their role home. Rendered under
+// docs/08 > /register. Signed-in users go to their role home, with a full
+// load so the header and tab bar re-render (as on /login). Rendered under
 // (auth)/loading.tsx, so reading the session here is fine.
 export default async function RegisterPage() {
   // Auth.js uses randomness before it reads the request: opt out of prerendering.
   await connection();
   const user = await getCurrentUser();
-  if (user) redirect(ROLE_HOME[user.role]);
+  if (user) return <HardRedirect href={ROLE_HOME[user.role]} />;
 
   return (
     <Card>

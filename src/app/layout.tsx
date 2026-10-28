@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Space_Grotesk, Unbounded } from "next/font/google";
 import { Suspense } from "react";
 
+import { AuthSync } from "@/components/auth/auth-sync";
 import { AppToaster } from "@/components/layout/app-toaster";
 import { NoticeToast } from "@/components/layout/notice-toast";
 import { TabBar } from "@/components/layout/tab-bar";
@@ -88,6 +89,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Suspense>
         <Suspense fallback={null}>
           <NoticeToast />
+        </Suspense>
+        {/* Reloads a tab whose header and tab bar are from before a log in or log out elsewhere. */}
+        <Suspense fallback={null}>
+          <AuthSync />
         </Suspense>
         {/* Top-center on phones (clear of the dock and tab bar), bottom-right on desktop. */}
         <AppToaster />

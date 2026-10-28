@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { HardRedirect } from "@/components/auth/hard-redirect";
 import { FairJudging } from "@/components/landing/fair-judging";
 import { Faq } from "@/components/landing/faq";
 import { FinalCta } from "@/components/landing/final-cta";
@@ -24,13 +24,13 @@ import { ROLE_HOME } from "@/lib/auth/permissions";
 // bottom. Each section is its own file in components/landing, owned by one
 // person, and uses LandingSection (components/landing/section) for spacing and
 // the heading scale. Only the Hero has an h1. The site footer comes from
-// (public)/layout.tsx. A signed-in user goes to their role home.
+// (public)/layout.tsx. A signed-in user goes to their role home, with a full
+// load so a tab still showing the signed-out header gets the signed-in one.
 
 async function RedirectSignedIn() {
   await connection();
   const user = await getCurrentUser();
-  if (user) redirect(ROLE_HOME[user.role]);
-  return null;
+  return user ? <HardRedirect href={ROLE_HOME[user.role]} /> : null;
 }
 
 export default function LandingPage() {

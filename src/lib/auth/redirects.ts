@@ -22,6 +22,20 @@ export function isAuthPath(pathname: string): boolean {
 }
 
 /**
+ * Whether a request is a page load (typing a URL, a reload, a link without the
+ * App Router), as opposed to the App Router fetching a page for a client-side
+ * navigation or a prefetch. Next.js hides its own "rsc" header from the proxy,
+ * so this reads what the browser sends: Sec-Fetch-Mode "navigate", or, from a
+ * browser without it, an Accept that asks for HTML (the router's fetch sends
+ * none, so it gets the default "*\/*").
+ */
+export function isPageLoad(headers: Headers): boolean {
+  const mode = headers.get("sec-fetch-mode");
+  if (mode) return mode === "navigate";
+  return (headers.get("accept") ?? "").includes("text/html");
+}
+
+/**
  * The callbackUrl if it is a path on this site, otherwise null. "//evil.com"
  * and "/\evil.com" are other sites to a browser, so they are refused.
  */

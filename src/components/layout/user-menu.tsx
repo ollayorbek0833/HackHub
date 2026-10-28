@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDownIcon, LogOutIcon, UserIcon } from "lucide-react";
+import { ChevronDownIcon, UserIcon } from "lucide-react";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,8 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { logout } from "./actions";
 
 // Shows the name (or the email until the profile is complete) and the role as
 // text. Items: "My profile" and "Log out".
@@ -47,14 +46,7 @@ export function UserMenu({
             My profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="min-h-10">
-          <form action={logout}>
-            <button type="submit" className="flex w-full items-center gap-2">
-              <LogOutIcon aria-hidden />
-              Log out
-            </button>
-          </form>
-        </DropdownMenuItem>
+        <LogoutButton variant="menu-item" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

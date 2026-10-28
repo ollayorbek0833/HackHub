@@ -576,7 +576,9 @@ npx shadcn@latest add input label textarea field select switch badge table tabs 
 3. **Session**: a JWT cookie with `sub` (the user id) and `role`. The id identifies the user; the role is only used for redirects.
 4. **Each request**: proxy redirects signed-out users from protected paths; the page or action calls `requireRole`, which reads the current role from
    the database.
-5. **Log out**: an action calling `signOut({ redirectTo: "/" })`.
+5. **Log out**: `<LogoutButton />` calls an action that runs `signOut({ redirect: false })`, then leaves for `/?notice=logged-out` with a full
+   page load (`location.replace`), so no signed-in route the router keeps alive survives it. Without JavaScript the form posts to the
+   same action, which redirects there.
 
 ### Permission matrix as `requireRole` calls
 

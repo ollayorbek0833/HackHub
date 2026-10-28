@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState, type MouseEvent } from "react";
-import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react";
+import { MenuIcon, UserIcon } from "lucide-react";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -16,7 +17,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import { logout } from "./actions";
 import { cn } from "@/lib/utils";
 
 import { NavLinks } from "./nav-links";
@@ -125,16 +125,7 @@ export function MobileNav({
                   My profile
                 </Link>
               </Button>
-              <form action={logout}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="h-11 w-full justify-start px-3 text-base"
-                >
-                  <LogOutIcon aria-hidden />
-                  Log out
-                </Button>
-              </form>
+              <LogoutButton variant="sheet" />
             </div>
           ) : (
             <div className="flex flex-col gap-2">

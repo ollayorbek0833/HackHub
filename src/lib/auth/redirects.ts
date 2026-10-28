@@ -47,3 +47,6 @@ export function safeCallbackUrl(value: unknown): string | null {
   if (/[\u0000-\u001f\u007f]/.test(value)) return null;
   return value;
 }
+
+/** Where log out lands: the landing page, with the "You're logged out." toast. */
+export const LOGGED_OUT_HREF = "/?notice=logged-out";

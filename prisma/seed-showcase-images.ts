@@ -10,12 +10,15 @@
 //   Events with other names are left alone.
 // - For each match: writes the two files as
 //   events/<eventId>/<kind>-<16 hex>.webp (the upload pattern; the hex is from
-//   the file's bytes), sets logoPath and bannerPath for every event in one
-//   transaction, then deletes the files the event used before.
+//   the file's bytes), sets logoPath and bannerPath in one transaction, then
+//   deletes the files the event used before.
+// - The dry run marks an event "replace" when its current image is an
+//   organizer's own upload, which --apply would replace and delete.
 // - The files and the directories it creates get the owner of the UPLOAD_DIR
 //   root (in production the app's non-root user), with modes 755 and 644, so
 //   organizers can still replace the images from the app.
-// - Running it again changes nothing: the paths are the same.
+// - Running it again changes nothing: files already in place with the same
+//   bytes aren't rewritten, and events already pointing at them aren't updated.
 import "dotenv/config";
 import { existsSync } from "node:fs";
 import { chmod, chown, lstat, mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
@@ -25,7 +28,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
 import { isSafeSegment, resolveUploadPath } from "../src/lib/uploads/files";
-import { assetSlug, showcaseImagePath } from "./showcase-assets/manifest";
+import { assetSlug, isShowcaseImagePath, showcaseImagePath } from "./showcase-assets/manifest";
 
 const apply = process.argv.includes("--apply");
 const assets = path.join(__dirname, "showcase-assets");
@@ -35,11 +38,23 @@ const KINDS = ["logo", "banner"] as const;
 type Kind = (typeof KINDS)[number];
 const FOLDER: Record<Kind, string> = { logo: "logos", banner: "banners" };
 
-type Planned = {
-  id: string;
-  name: string;
-  files: Record<Kind, { relative: string; bytes: Buffer; old: string | null }>;
+type PlannedFile = {
+  relative: string;
+  bytes: Buffer;
+  /** The event's current path for this kind. */
+  old: string | null;
+  /** The file is already at `relative` with these exact bytes: nothing to write. */
+  written: boolean;
+  /** `old` is an organizer's own upload (not a showcase asset), which --apply replaces and deletes. */
+  replacesUpload: boolean;
 };
+type Planned = { id: string; name: string; files: Record<Kind, PlannedFile> };
+
+/** The bytes at a path inside UPLOAD_DIR, or null when it's unsafe or missing. */
+async function readStored(relative: string): Promise<Buffer | null> {
+  const full = resolveUploadPath(uploadRoot, relative);
+  return full ? readFile(full).catch(() => null) : null;
+}
 
 async function main() {
   const prisma = new PrismaClient({
@@ -57,6 +72,8 @@ async function main() {
       orderBy: { name: "asc" },
     });
 
+    let written = 0;
+    let updated = 0;
     const planned: Planned[] = [];
     const missing: string[] = [];
     const unmatched: string[] = [];
@@ -77,23 +94,39 @@ async function main() {
       const files = {} as Planned["files"];
       for (const kind of KINDS) {
         const bytes = await readFile(paths[kind]);
-        files[kind] = { relative: showcaseImagePath(event.id, kind, bytes), bytes, old: kind === "logo" ? event.logoPath : event.bannerPath };
+        const relative = showcaseImagePath(event.id, kind, bytes);
+        const old = kind === "logo" ? event.logoPath : event.bannerPath;
+        const existing = await readStored(relative);
+        const oldBytes = old && old !== relative ? await readStored(old) : null;
+        files[kind] = {
+          relative,
+          bytes,
+          old,
+          written: existing !== null && existing.equals(bytes),
+          // A showcase file's name carries its own hash; an upload's is random.
+          replacesUpload: oldBytes !== null && !isShowcaseImagePath(old!, oldBytes),
+        };
       }
       planned.push({ id: event.id, name: event.name, files });
     }
 
     for (const p of planned) {
-      const same = KINDS.every((k) => p.files[k].old === p.files[k].relative);
-      console.log(`  ${same ? "unchanged" : "set      "}  ${p.name}`);
+      const uploads = KINDS.filter((k) => p.files[k].replacesUpload);
+      const unchanged = KINDS.every((k) => p.files[k].old === p.files[k].relative && p.files[k].written);
+      const label = uploads.length ? "replace  " : unchanged ? "unchanged" : "set      ";
+      const note = uploads.length ? `  (will replace an organizer upload: ${uploads.join(" and ")})` : "";
+      console.log(`  ${label}  ${p.name}${note}`);
     }
 
     if (apply && planned.length > 0) {
       const owner = await stat(uploadRoot).catch(() => null);
       if (!owner?.isDirectory()) throw new Error(`UPLOAD_DIR ${uploadRoot} isn't a directory.`);
 
-      // 1. Write the new files (skipping identical ones already in place).
+      // 1. Write the new files. A file already there with the same bytes is
+      //    left untouched (the app may be serving it).
       for (const p of planned) {
         for (const kind of KINDS) {
+          if (p.files[kind].written) continue;
           const full = resolveUploadPath(uploadRoot, p.files[kind].relative);
           if (!full) throw new Error(`Unsafe path ${p.files[kind].relative}`);
           await mkdir(path.dirname(full), { recursive: true });
@@ -101,15 +134,18 @@ async function main() {
           await own(full, path.dirname(full), owner.uid, owner.gid);
         }
       }
-      // 2. Point the events at them, all in one transaction.
+      // 2. Point the events that need it at them, all in one transaction.
+      const changed = planned.filter((p) => KINDS.some((k) => p.files[k].old !== p.files[k].relative));
       await prisma.$transaction(
-        planned.map((p) =>
+        changed.map((p) =>
           prisma.event.update({
             where: { id: p.id },
             data: { logoPath: p.files.logo.relative, bannerPath: p.files.banner.relative },
           }),
         ),
       );
+      written = planned.reduce((n, p) => n + KINDS.filter((k) => !p.files[k].written).length, 0);
+      updated = changed.length;
       // 3. Delete the images they used before.
       for (const p of planned) {
         for (const kind of KINDS) {
@@ -122,7 +158,9 @@ async function main() {
     }
 
     const unused = [...slugs].filter((s) => !used.has(s));
-    console.log(`\nMatched: ${planned.length} event(s)${apply ? ", images set" : " (dry run, nothing written)"}.`);
+    console.log(
+      `\nMatched: ${planned.length} event(s)${apply ? `; wrote ${written} file(s), updated ${updated} event(s)` : " (dry run, nothing written)"}.`,
+    );
     console.log(`Missing assets: ${missing.length}${missing.length ? `\n  ${missing.join("\n  ")}` : ""}`);
     console.log(`Events without assets (left alone): ${unmatched.length}${unmatched.length ? `\n  ${unmatched.join("\n  ")}` : ""}`);
     if (unused.length) console.log(`Assets with no event: ${unused.length}\n  ${unused.join("\n  ")}`);

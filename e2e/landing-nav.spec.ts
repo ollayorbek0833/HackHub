@@ -128,6 +128,28 @@ test.describe("desktop, 1440 px", () => {
     ).toHaveAttribute("aria-current", "location");
   });
 
+  test("a deep link still lands when the browser's own jump came too early", async ({
+    page,
+  }) => {
+    // Stand-in for a load where the browser looked for #faq before the page
+    // was tall enough and gave up: until the page has loaded, every scroll
+    // is undone, so the browser's own jump never sticks.
+    await page.addInitScript(() => {
+      const undo = () => window.scrollTo({ top: 0, behavior: "instant" });
+      window.addEventListener("scroll", undo);
+      window.addEventListener(
+        "load",
+        () => {
+          undo();
+          window.removeEventListener("scroll", undo);
+        },
+        { once: true },
+      );
+    });
+    await page.goto("/#faq");
+    await expectLandedOn(page, "faq");
+  });
+
   test("from another page, a section link goes to /#faq", async ({ page }) => {
     await page.goto("/about");
     const link = sectionNav(page).getByRole("link", {

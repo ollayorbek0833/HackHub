@@ -13,7 +13,10 @@ import {
 } from "@/components/landing/happening-now";
 import { Hero } from "@/components/landing/hero";
 import { Lifecycle } from "@/components/landing/lifecycle";
-import { SmoothAnchors } from "@/components/layout/smooth-anchors";
+import {
+  LandOnHash,
+  SmoothAnchors,
+} from "@/components/layout/smooth-anchors";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { ROLE_HOME } from "@/lib/auth/permissions";
 
@@ -36,8 +39,10 @@ export default function LandingPage() {
       <Suspense fallback={null}>
         <RedirectSignedIn />
       </Suspense>
-      {/* The header's section links glide here (motion-safe only). */}
+      {/* The header's section links glide here (motion-safe only), and a
+          deep link like /#faq lands even if the browser's own jump missed. */}
       <SmoothAnchors />
+      <LandOnHash />
 
       <main className="mx-auto w-full max-w-6xl px-4">
         <Hero />

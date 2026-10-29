@@ -1,7 +1,7 @@
 # Production image (docs/07 > Deployment architecture). Targets:
 #   migrate  one-shot: apply migrations and seed the first organizer
 #   runner   the Next.js standalone server
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json prisma7.config.ts ./
 COPY prisma ./prisma
@@ -20,7 +20,7 @@ RUN npm run build
 FROM build AS migrate
 CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
 
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
